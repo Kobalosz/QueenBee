@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit(state/findings.json)",
+      "Edit(state/status.md)",
+      "Bash(python3 scripts/fetch_mail.py)",
+      "Bash(python3 scripts/fetch_mail.py --check)",
+      "Bash(python3 scripts/publish_findings.py)",
+      "Bash(python scripts/fetch_mail.py)",
+      "Bash(python scripts/fetch_mail.py --check)",
+      "Bash(python scripts/publish_findings.py)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-secret-read.sh\"",
+            "statusMessage": "Checking secret-store access policy"
+          }
+        ]
+      }
+    ]
+  }
+}
