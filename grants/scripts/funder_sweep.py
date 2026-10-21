@@ -30,6 +30,18 @@ STATE = os.path.join(R, "state", "funder_pages.json")
 DEADLINE = 180
 dry = "--dry" in sys.argv[1:]
 
+
+def _utf8_stdout():
+    # Windows consoles default to a legacy code page and fail on characters such as ★ or —.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
+_utf8_stdout()
+
 OPEN = re.compile(r"applications? (?:are |is )?(?:now )?(?:open|being accepted)|now accepting|apply now|accepting applications|apply today|open for applications", re.I)
 CLOSED = re.compile(r"applications? (?:are |is )?(?:now )?closed|no longer accepting|currently closed|closed for|not accepting|check back|opens? (?:in|on)|coming soon", re.I)
 MONTHS = r"(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?"
@@ -54,7 +66,7 @@ CTX = _ctx()
 def rows():
     """(program, url, section) for every table row with a URL, outside the Aggregators section."""
     out, section = [], ""
-    for line in open(FUNDERS):
+    for line in open(FUNDERS, encoding="utf-8"):
         if line.startswith("## "):
             section = line[3:].strip()
         if section.lower().startswith("aggregators") or not line.startswith("|"):
@@ -105,7 +117,7 @@ def signals(t):
 
 
 try:
-    old = json.load(open(STATE))
+    old = json.load(open(STATE, encoding="utf-8"))
 except (OSError, ValueError):
     old = {}
 items = rows()
@@ -151,4 +163,4 @@ for g in ("CHANGED", "NEW PAGE", "UNCHANGED", "BLOCKED", "FAILED"):
                 print(f"    date near deadline wording: ...{d}...")
 if not dry:
     os.makedirs(os.path.dirname(STATE), exist_ok=True)
-    json.dump(new_state, open(STATE, "w"), indent=1)
+    json.dump(new_state, open(STATE, "w", encoding="utf-8"), indent=1)
