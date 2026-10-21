@@ -7,7 +7,7 @@ Line shape: `- [ ] YYYY-MM-DD deadline · Funder — Program · Tier · $max · 
 
 ## Ready for approval
 Drafted, linted, waiting for the owner's yes (approve mode). The doc in `applications/` holds
-every answer. The owner approves on the dashboard and the next run sends it.
+every answer. The owner approves in the Grants app and the next run sends it.
 
 ## Packages ready (for the client to submit)
 Tier B. Each folder in `applications/files/` has a `CHECKLIST.md` with the remaining steps.

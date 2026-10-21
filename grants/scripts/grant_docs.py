@@ -9,7 +9,7 @@ script can see.
       Every amount comes from a budget preset in config/answers.md, and the line items add up to
       the Total line (and stay under the program's maximum when given).
   python3 scripts/grant_docs.py record <applications/slug.json>
-      The application record the owner's dashboard reads matches the schema in config/spec.md.
+      The application record the owner's Grants app reads matches the schema in config/spec.md.
 
 Both exit 1 on any FAIL. The agent fixes the draft and reruns until each exits 0.
 """
@@ -44,7 +44,7 @@ MONEY_RE = re.compile(r"\$\s?\d[\d,]*(?:\.\d{1,2})?(?:\s?(?:k|K|M|million|thousa
 
 def source_text():
     """Every place a fact may come from: the narrative library, the profile, and what the owner
-    typed into the dashboard."""
+    typed into the Grants app."""
     parts = []
     for p in ("config/answers.md", "config/profile.json", "config/owner-input.json"):
         f = ROOT / p
@@ -217,7 +217,7 @@ def record(path):
         errs.append(f"file name {p.name} does not match slug {slug}")
     for k in ("funder", "program", "summary", "url"):
         if not str(r.get(k, "")).strip():
-            errs.append(f"{k} is missing; the owner sees it on the dashboard")
+            errs.append(f"{k} is missing; the owner sees it in the Grants app")
     if r.get("url") and not str(r["url"]).startswith(("https://", "http://")):
         errs.append("url must be the funder's web address")
     if r.get("tier") not in ("A", "B", "C"):
@@ -251,7 +251,7 @@ def record(path):
             continue
         nid = str(n.get("id", ""))
         if not re.match(r"^[A-Za-z0-9_-]{1,40}$", nid):
-            errs.append(f"needs[{i}].id must be letters, digits, - or _ (the dashboard drops it otherwise)")
+            errs.append(f"needs[{i}].id must be letters, digits, - or _ (the Grants app drops it otherwise)")
         if nid in ids:
             errs.append(f"needs[{i}].id {nid} is used twice")
         ids.add(nid)
@@ -265,7 +265,7 @@ def record(path):
         errs.append(f"a {st} record must list what the owner has to do in needs")
     for k in OWNER_FIELDS:
         if k in r:
-            warns.append(f"{k} belongs in config/owner-input.json, which only the dashboard writes; drop it here")
+            warns.append(f"{k} belongs in config/owner-input.json, which only the Grants app writes; drop it here")
     if r.get("doc") and not (ROOT / str(r["doc"])).is_file():
         warns.append(f"doc {r['doc']} does not exist yet")
     if r.get("screenshot") and not (ROOT / str(r["screenshot"])).is_file():

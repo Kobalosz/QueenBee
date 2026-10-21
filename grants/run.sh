@@ -41,7 +41,7 @@ mx = os.environ.get('MAX_OVERRIDE') or run.get('max_submissions_per_run', 2)
 out.append(f"Submit at most {mx} Tier A applications and draft at most {run.get('max_drafts_per_run', 4)} "
            "packages or approval drafts this run, then exit.")
 if sub.get('mode', 'auto') == 'approve':
-    out.append("SUBMISSION MODE IS APPROVE: submit ONLY applications the owner approved on the dashboard (approved_at set "
+    out.append("SUBMISSION MODE IS APPROVE: submit ONLY applications the owner approved in the Grants app (approved_at set "
                "in config/owner-input.json), filled from the approved applications/<slug>.md without changing a word. "
                "For every other Tier A application, write the full doc, lint it, set its record to READY FOR APPROVAL, "
                "and do not open its form.")
@@ -135,7 +135,7 @@ METHOD: work data/queue.md top-down by deadline, then the new leads. Gate each o
 
 SCOPE: a hard eligibility mismatch is a one-line SKIP, not NEEDS HUMAN. Never submit a weak fit just to reach the cap; zero strong applications beats one poor one. A tool call that is denied is denied on purpose: log what you needed in state/status.md and move on.
 
-THE OWNER'S DASHBOARD reads applications/<slug>.json (schema in config/spec.md). Write or update the record every time an application's status changes, put every single thing the owner must do in its needs list in plain words, and run python3 scripts/grant_docs.py record on it until it prints OK.
+THE OWNER'S GRANTS APP reads applications/<slug>.json (schema in config/spec.md). Write or update the record every time an application's status changes, put every single thing the owner must do in its needs list in plain words, and run python3 scripts/grant_docs.py record on it until it prints OK.
 
 END OF RUN: write state/last_run.json, update the per-application docs and records, data/queue.md, logs/grants-log.md (summary at the top, with the next deadlines in date order), data/funders.md for any new recurring program, and add a new status block at the top of state/status.md. If Chrome is disconnected, Tier A work waits: still do sourcing, gating and Tier B drafting, and log it."
 
