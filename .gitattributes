@@ -1,0 +1,11 @@
+# Scripts keep Unix line endings on every machine. On Windows, Git can otherwise check them out with
+# CRLF, and Git Bash then fails on the shell scripts and hooks the agents run.
+*.sh   text eol=lf
+*.py   text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+# Windows batch files need CRLF.
+*.cmd  text eol=crlf
