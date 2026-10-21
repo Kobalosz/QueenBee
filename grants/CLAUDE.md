@@ -80,17 +80,22 @@ can collect answers from the owner and relay them; say so.
    "does this look good?"
 6. **Fill the State and local section of `data/funders.md`** for the client's state, county and city
    using the web-search lane in `data/sources.md`. Verify each page loads before adding it.
-7. **Offer to install the schedule** and, on a yes, run `./scripts/schedule.sh install` for them.
-   If this folder is under ~/Documents, ~/Desktop or ~/Downloads, say that macOS blocks background
-   jobs there and offer the fix (move the folder, or Full Disk Access for /bin/bash).
+7. **Offer to install the schedule** and, on a yes, run `python scripts/schedule.py install` for
+   them (`python3` on a Mac). On Windows it becomes a Task Scheduler task that runs while the owner is
+   signed in; say that the computer must be on and signed in at that hour, with Chrome able to open.
+   On a Mac, if this folder is under ~/Documents, ~/Desktop or ~/Downloads, say that macOS blocks
+   background jobs there and offer the fix (move the folder, or Full Disk Access for that Python).
 8. **Give them the Grants app.** It is the only thing they will open from now on. If `app/dist/`
-   has no build yet, run `cd app && npm install && npm run dist` (needs Node; ask first if it is
-   missing) and open the `.dmg` it makes so they can drag **Grants** into Applications. On first
-   launch it asks for the grants folder: point it at this folder. Walk through it in two sentences:
+   has no build for their system yet, run `cd app && npm install && npm run dist:win` (or
+   `dist:mac`; needs Node, so ask first if it is missing). On Windows, run
+   `app/dist/Grants Setup <version>.exe`, which adds Grants to the Start menu and the Desktop; on a
+   Mac, open the `.dmg` and drag Grants into Applications. On first launch it asks for the grants
+   folder: point it at this folder. Walk through it in two sentences:
    the top line says whether anything needs them, and they answer questions, upload files, approve,
    and record results right in the window. If they want a look before any real run,
    `cd app && npm run demo` opens it with made-up sample data. Say plainly that the app is not
-   signed by Apple yet, so the first open is right-click, Open, then Open again.
+   code-signed yet: on Windows, SmartScreen says "Windows protected your PC" the first time, and
+   they choose More info, then Run anyway; on a Mac, the first open is right-click, Open, Open.
 9. **Mention the optional add-ons in one short list, without pushing:** signing in to Submittable
    or Hello Alice in Chrome (then add the host to `channels.signed_in_portals`); SAM.gov
    registration if they want federal grants and have none.
@@ -121,7 +126,7 @@ can collect answers from the owner and relay them; say so.
 grants/
 ├── CLAUDE.md                # THIS FILE: the playbook
 ├── README.md                # human-facing overview
-├── run.sh                   # one bounded headless run (reads config/settings.json)
+├── run.py                   # one bounded headless run (reads config/settings.json)
 ├── app/                     # the owner's Grants app (Electron); npm run demo / npm run dist
 ├── config/
 │   ├── settings.json        # run knobs, submission mode, targets       (gitignored)
@@ -145,8 +150,7 @@ grants/
     ├── funder_sweep.py      # which funder pages changed since last run
     ├── grant_docs.py        # lint narratives, verify budgets, check application records
     ├── dupe_check.sh        # has this program already been applied to this cycle?
-    ├── schedule.sh          # install/remove the recurring run
-    └── scheduled_run.sh     # what the scheduler calls
+    └── schedule.py          # install/remove the recurring run (Task Scheduler, launchd or cron)
 ```
 
 ## ★ THE WORKING METHOD ★
