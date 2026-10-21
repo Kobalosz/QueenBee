@@ -1,0 +1,31 @@
+{
+  "_readme": "Settings for the grant-results agent, which reads funders' emails about submitted grants and tells the owner what they say. Setup copies this to settings.json.",
+  "grants_folder": "../grants",
+  "_grants_folder_note": "The grants agent's folder. Its applications/ records say which funders to look for, and its state/email-findings.json is where findings go for the Grants app.",
+  "mail": {
+    "address": "",
+    "imap_host": "imap.gmail.com",
+    "imap_port": 993,
+    "folders": ["INBOX"],
+    "keychain_service": "queenbee-grant-mail",
+    "_mail_note": "The owner's mailbox, read over IMAP with an app password kept in the macOS Keychain under keychain_service. Gmail: imap.gmail.com. iCloud: imap.mail.me.com. Yahoo: imap.mail.yahoo.com. Microsoft (Outlook.com, Microsoft 365) does not accept app passwords over IMAP any more and is not supported yet. For Gmail, add \"[Gmail]/Spam\" to folders if decisions might land there."
+  },
+  "platform_senders": [
+    "submittable.com",
+    "smapply.io",
+    "smapply.org",
+    "fluxx.io",
+    "grantinterface.com",
+    "helloalice.com",
+    "grants.gov"
+  ],
+  "_platform_senders_note": "Grant platforms that send email on a funder's behalf. A message from one of these counts only when it also names the funder or the program.",
+  "max_messages_per_run": 40,
+  "retention_days": 60,
+  "_retention_note": "Extracted message text in state/inbox/ is deleted after this many days.",
+  "schedule": {
+    "frequency": "manual",
+    "_frequency_options": "manual | daily | weekdays | twice-weekly | weekly",
+    "hour": 8
+  }
+}
