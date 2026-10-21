@@ -1,0 +1,76 @@
+{
+  "_readme": "Every knob the grant agent obeys. Setup copies this to settings.json and fills it from the client's answers. run.sh turns it into the instructions for each run. Full docs: README.md#settings.",
+  "run": {
+    "max_submissions_per_run": 2,
+    "max_drafts_per_run": 4,
+    "_drafts_note": "Drafts are packages the agent writes but does not submit: federal and state applications, letters of inquiry, anything in approve mode. They cost the client review time, so they are capped separately.",
+    "one_application_per_funder_per_run": true,
+    "max_applications_per_program_per_cycle": 1,
+    "_cycle_note": "Most programs accept one application per business per cycle (a month, a round, a year). The agent checks applications/, data/queue.md and logs/grants-log.md before every application.",
+    "min_days_before_deadline_to_submit": 2,
+    "min_days_before_deadline_to_draft": 14,
+    "_deadline_note": "A web form closing in under 2 days is still worth submitting. A federal or foundation package needs the client's review, signatures and attachments, so anything closing in under 14 days is logged as too tight instead of drafted."
+  },
+  "schedule": {
+    "frequency": "manual",
+    "_frequency_options": "manual | daily | weekdays | twice-weekly | weekly",
+    "hour": 9
+  },
+  "submission": {
+    "mode": "auto",
+    "_mode_note": "auto: scheduled runs submit simple web-form grants (Tier A in config/spec.md) that clear every gate. approve: scheduled runs only draft; every application waits as READY FOR APPROVAL in data/queue.md until the client says yes in an interactive session. Federal, state and package grants (Tier B) are never submitted by the agent in either mode.",
+    "allow_checkbox_certification": true,
+    "_checkbox_note": "A checkbox like 'I certify this information is accurate' may be ticked, because every fact on the form comes from the client's confirmed files. false: any such checkbox makes the application NEEDS HUMAN.",
+    "allow_typed_signature": false,
+    "_signature_note": "A typed or drawn signature is the client signing for the business. Off by default: the form is filled, left open, and logged NEEDS HUMAN.",
+    "max_application_fee_usd": 0,
+    "_fee_note": "Legitimate grants rarely charge to apply. 0 means any fee sends the grant to the FOR YOU list with the fee amount; the agent never enters payment details."
+  },
+  "targets": {
+    "apply_as": ["business"],
+    "_apply_as_note": "Which entities in profile.json to find grants for: business, nonprofit, or both. A nonprofit grant needs an enabled nonprofit entity with IRS status (or a fiscal sponsor the program accepts). The agent never applies as one entity using the other's facts.",
+    "keywords": ["small business", "manufacturing"],
+    "_keywords_note": "Used for the Grants.gov search and the web-search lane. Setup writes these from what the client does and what the money is for.",
+    "exclude_keywords": ["clinical trial", "dissertation", "fellowship for students"],
+    "min_award_usd": 1000,
+    "include_national": true,
+    "include_state": true,
+    "include_local": true,
+    "allow_public_vote_contests": false,
+    "_vote_note": "Some 'grants' are popularity contests decided by public votes. false: they go to the FOR YOU list, because winning one takes the client's own promotion.",
+    "allow_equity_or_loans": false,
+    "fit_note": "One or two sentences, in the client's words, about what money is worth chasing. The agent uses this as a judgment gate. Example: 'Grants that pay for equipment, training or marketing. Skip anything under $2,000 that needs more than an hour of writing.'",
+    "priority_funders": [],
+    "skip_funders": [],
+    "federal": {
+      "enabled": true,
+      "statuses": "forecasted|posted",
+      "agencies": [],
+      "_agencies_note": "Optional Grants.gov agency codes to restrict the search (e.g. SBA, DOC, USDA). Empty searches every agency."
+    }
+  },
+  "channels": {
+    "signed_in_portals": [],
+    "_signed_in_portals_note": "Grant portals where the CLIENT created the account and Chrome is signed in (Submittable, Hello Alice, a foundation's own portal). The agent may apply inside that session. It never creates an account or types a password; a login page is NEEDS HUMAN.",
+    "never_submit_on": ["grants.gov", "login.gov", "sam.gov", "simpler.grants.gov"],
+    "_never_submit_note": "Federal submissions are signed by the client's Authorized Organization Representative. The agent drafts the package and the client submits it.",
+    "source_only": ["grantwatch.com", "instrumentl.com", "candid.org", "grantforward.com"],
+    "_source_only_note": "Aggregators are for finding grants. The agent always applies on the funder's own page."
+  },
+  "documents": {
+    "narrative_max_words_default": 300,
+    "_narrative_note": "Used only when a question gives no limit. When the form states a word or character limit, that limit wins. Rules: config/documents.md."
+  },
+  "safety": {
+    "never_create_accounts": true,
+    "never_solve_interactive_captcha": true,
+    "never_fabricate_a_fact": true,
+    "never_enter_ssn_or_bank_details": true,
+    "screenshot_every_submit": true,
+    "require_log_before_submit": true
+  },
+  "integrations": {
+    "post_run_script": "",
+    "_post_run_note": "Optional path to a python3 script run after each scheduled run, e.g. one that emails the client the run summary. Empty by default."
+  }
+}
