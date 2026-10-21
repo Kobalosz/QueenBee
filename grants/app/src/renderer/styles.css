@@ -183,3 +183,13 @@ aside h2 { font-size: 20px; }
 .hero .actions { margin-top: 24px; }
 /* Reading is easier without selectable chrome; the content stays selectable. */
 .top, button, .button, summary { -webkit-user-select: none; user-select: none; }
+
+/* Funder emails: the funder's own words, set apart from ours */
+.quote { margin: 4px 0 10px; padding: 2px 0 2px 16px; border-left: 3px solid var(--rule); font-size: 18px; line-height: 1.5; max-width: 62ch; }
+input.amount { width: 160px; }
+.inline-label { font-weight: 500; }
+.news { margin-top: 16px; }
+.news h3 { font-size: 16px; margin: 0 0 6px; }
+.news ul { margin: 0; padding-left: 18px; }
+.news li { margin: 0 0 4px; max-width: 64ch; }
+.news .when { color: var(--slate); font-size: 15px; margin-right: 6px; }

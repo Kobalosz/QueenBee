@@ -87,6 +87,12 @@ function md(text) {
 
 // ── What goes where ──────────────────────────────────────────────────────────────
 const openNeeds = (a) => (a.needs || []).filter((n) => !n.answered_at && !n.done_at);
+// Funder emails the owner still has to look at: a decision not yet recorded, or a request for a reply.
+const pendingEmail = (a) =>
+  (a.email || []).filter(
+    (f) => !f.confirmed_at && !f.dismissed_at &&
+      (f.kind === "NEEDS_REPLY" || ((f.kind === "AWARDED" || f.kind === "DECLINED") && !a.outcome))
+  );
 function classify(a) {
   const st = a.status || "";
   if (st === "SKIP" || st === "TOO TIGHT") return "passed";
@@ -130,6 +136,7 @@ function render() {
     clock.push(`Last checked ${shortDate(s.last_run.finished_at)} at ${t}`);
   }
   clock.push(s.next_run ? `Next check ${shortDate(s.next_run, true)}` : "Checks only when started by hand");
+  if (s.inbox_checked_at) clock.push(`Inbox read ${shortDate(s.inbox_checked_at)}`);
   $("clock").innerHTML = clock.map((c) => `<span>${esc(c)}</span>`).join("");
 
   if (!s.configured) {
@@ -148,7 +155,8 @@ function render() {
   by.sent.sort((x, y) => sentAt(y).localeCompare(sentAt(x)));
 
   const needCount = by.todo.reduce((n, a) => n + openNeeds(a).length, 0);
-  const total = needCount + by.approve.length + by.submit.length;
+  const inbox = apps.flatMap((a) => pendingEmail(a).map((f) => ({ a, f }))).sort((x, y) => String(y.f.date).localeCompare(String(x.f.date)));
+  const total = inbox.length + needCount + by.approve.length + by.submit.length;
   if (total === 0) {
     h1.textContent = "Nothing needs you right now.";
     h1.className = "calm";
@@ -159,6 +167,7 @@ function render() {
     h1.textContent = `${NUM[total] || total} ${total === 1 ? "thing needs" : "things need"} you.`;
     h1.className = "";
     const parts = [];
+    if (inbox.length) parts.push(`${inbox.length === 1 ? "an email from a funder" : words(inbox.length) + " emails from funders"} to look at`);
     if (needCount) parts.push(`${needCount === 1 ? "a question or task" : words(needCount) + " questions or tasks"} on applications the agent is writing`);
     if (by.approve.length) parts.push(`${by.approve.length === 1 ? "an application" : words(by.approve.length) + " applications"} waiting for your OK`);
     if (by.submit.length) parts.push(`${by.submit.length === 1 ? "a package" : words(by.submit.length) + " packages"} ready for you to submit`);
@@ -166,6 +175,8 @@ function render() {
   }
 
   let html = "";
+  if (inbox.length)
+    html += section("From your inbox", "The agent read these emails from funders. Check each one: nothing is recorded until you confirm it.", `<div class="slips">${inbox.map(({ a, f }) => emailSlip(a, f)).join("")}</div>`);
   if (by.todo.length)
     html += section("Help the agent finish", "Answer here and the agent uses it on its next run. Your answers stay on this computer.", `<div class="slips">${by.todo.map(todoSlips).join("")}</div>`);
   if (by.approve.length)
@@ -192,17 +203,20 @@ function render() {
     if (openDetails.includes(x.firstChild.textContent)) x.parentElement.open = true;
   });
 
-  const upcoming = apps
-    .filter((a) => a.deadline && daysFrom(a.deadline) >= 0 && [...NEEDS_YOU, "working"].includes(classify(a)))
-    .sort(byDeadline);
+  // Application deadlines, plus dates a funder asked for a reply by.
+  const upcoming = [
+    ...apps
+      .filter((a) => a.deadline && daysFrom(a.deadline) >= 0 && [...NEEDS_YOU, "working"].includes(classify(a)))
+      .map((a) => ({ date: a.deadline, what: title(a), mine: NEEDS_YOU.includes(classify(a)) })),
+    ...inbox
+      .filter(({ f }) => f.kind === "NEEDS_REPLY" && f.reply_by && daysFrom(f.reply_by) >= 0)
+      .map(({ a, f }) => ({ date: f.reply_by, what: `Reply to ${a.funder}`, mine: true })),
+  ].sort((x, y) => x.date.localeCompare(y.date));
   $("aside").innerHTML =
     `<h2>Deadlines</h2>` +
     (upcoming.length
       ? `<ol class="dates">${upcoming
-          .map((a) => {
-            const mine = NEEDS_YOU.includes(classify(a));
-            return `<li class="${mine ? "mine" : ""}"><div class="when">${esc(shortDate(a.deadline))}, ${esc(relDays(daysFrom(a.deadline)))}</div><div class="what">${esc(title(a))}${mine ? ". Needs you." : ""}</div></li>`;
-          })
+          .map((d) => `<li class="${d.mine ? "mine" : ""}"><div class="when">${esc(shortDate(d.date))}, ${esc(relDays(daysFrom(d.date)))}</div><div class="what">${esc(d.what)}${d.mine ? ". Needs you." : ""}</div></li>`)
           .join("")}</ol>`
       : `<p class="empty-aside">No open deadlines.</p>`);
 
@@ -270,6 +284,41 @@ function submitSlip(a) {
     <button data-act="submitted"${attrs({ slug: a.slug })}>I submitted it</button></div></article>`;
 }
 
+function emailSlip(a, f) {
+  const ids = { slug: a.slug, finding: f.id };
+  const quote = f.quote ? `<blockquote class="quote">“${esc(f.quote)}”</blockquote>` : "";
+  const sender = `<p class="why">From ${esc(f.from)}: “${esc(f.subject)}”</p>`;
+  // The application's own deadline is past and beside the point here; the email's date is what matters.
+  const head = `<div class="slip-head"><strong>${esc(title(a))}</strong><span>Email from ${esc(shortDate(f.date))}</span></div>`;
+  let act;
+  if (f.kind === "AWARDED") {
+    act = `<div class="actions"><label class="inline-label" for="won-${esc(f.id)}">Amount won, in dollars</label>
+      <input type="text" inputmode="decimal" class="amount" id="won-${esc(f.id)}" placeholder="Amount won" value="${f.amount_usd ? esc(f.amount_usd) : ""}"></div>
+      <div class="actions"><button data-act="email-confirm"${attrs(ids)}>Record as won</button>
+      <button class="quiet" data-act="email-dismiss"${attrs(ids)}>That's not right</button></div>`;
+  } else if (f.kind === "DECLINED") {
+    act = `<div class="actions"><button data-act="email-confirm"${attrs(ids)}>Record as not selected</button>
+      <button class="quiet" data-act="email-dismiss"${attrs(ids)}>That's not right</button></div>`;
+  } else {
+    const due = f.reply_by
+      ? `<span class="${daysFrom(f.reply_by) <= 7 ? "due-soon" : ""}">Reply by ${esc(shortDate(f.reply_by))}, ${esc(relDays(daysFrom(f.reply_by)))}.</span> `
+      : "";
+    act = `<p class="why">${due}Answer from your own email; the agent never replies.</p>
+      <div class="actions"><button data-act="email-confirm"${attrs(ids)}>I've replied</button>
+      <button class="quiet" data-act="email-dismiss"${attrs(ids)}>No reply needed</button></div>`;
+  }
+  return `<article class="slip">${head}<p class="ask">${esc(f.summary)}</p>${quote}${sender}${act}</article>`;
+}
+
+// What funders have said, newest first, inside an application's details.
+function funderNews(a) {
+  const shown = (a.email || []).filter((f) => !f.dismissed_at);
+  if (!shown.length) return "";
+  return `<div class="news"><h3>From the funder</h3><ul>${shown
+    .map((f) => `<li><span class="when">${esc(shortDate(f.date))}</span> ${esc(f.summary)}</li>`)
+    .join("")}</ul></div>`;
+}
+
 // ── Rows: things already handled ─────────────────────────────────────────────────
 function row(a, sub, right, inner) {
   const id = `${a.slug}::row`;
@@ -290,7 +339,7 @@ function facts(a) {
 function detailBody(a, withOutcome) {
   return `${a.summary ? `<p>${esc(a.summary)}</p>` : ""}${facts(a)}
     <div class="actions">${funderLink(a)}</div>
-    ${withOutcome ? outcomeControls(a) : ""}<div class="doc-slot"></div>`;
+    ${withOutcome ? outcomeControls(a) : ""}${funderNews(a)}<div class="doc-slot"></div>`;
 }
 function outcomeControls(a) {
   const ids = { slug: a.slug };
@@ -412,6 +461,15 @@ document.addEventListener("click", async (e) => {
         value === "AWARDED" ? "Congratulations. Recorded as won." : value === "DECLINED" ? "Recorded as not selected." : "Result cleared.");
       break;
     }
+    case "email-confirm": {
+      const amt = $(`won-${b.dataset.finding}`);
+      act(api.emailConfirm, { slug, findingId: b.dataset.finding, amount: amt ? amt.value : "" }, b, (r) =>
+        r.kind === "AWARDED" ? "Congratulations. Recorded as won." : r.kind === "DECLINED" ? "Recorded as not selected." : "Marked as replied.");
+      break;
+    }
+    case "email-dismiss":
+      act(api.emailDismiss, { slug, findingId: b.dataset.finding }, b, "Dismissed. Nothing was recorded.");
+      break;
     case "choose-folder":
       act(api.chooseFolder, {}, b, "Folder chosen.");
       break;
