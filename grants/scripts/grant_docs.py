@@ -8,6 +8,8 @@ script can see.
   python3 scripts/grant_docs.py budget <budget.md> [--max-award N]
       Every amount comes from a budget preset in config/answers.md, and the line items add up to
       the Total line (and stay under the program's maximum when given).
+  python3 scripts/grant_docs.py record <applications/slug.json>
+      The application record the owner's dashboard reads matches the schema in config/spec.md.
 
 Both exit 1 on any FAIL. The agent fixes the draft and reruns until each exits 0.
 """
@@ -41,9 +43,10 @@ MONEY_RE = re.compile(r"\$\s?\d[\d,]*(?:\.\d{1,2})?(?:\s?(?:k|K|M|million|thousa
 
 
 def source_text():
-    """Every place a fact may come from: the narrative library and the profile."""
+    """Every place a fact may come from: the narrative library, the profile, and what the owner
+    typed into the dashboard."""
     parts = []
-    for p in ("config/answers.md", "config/profile.json"):
+    for p in ("config/answers.md", "config/profile.json", "config/owner-input.json"):
         f = ROOT / p
         if f.is_file():
             parts.append(f.read_text())
@@ -189,6 +192,87 @@ def budget(path, max_award=None):
     return report(errs, warns)
 
 
+STATUSES = {"SUBMITTED", "READY FOR APPROVAL", "PACKAGE READY", "FOR YOU", "NEEDS HUMAN", "WATCH", "TOO TIGHT", "SKIP",
+            "DRAFTING"}
+NEED_KINDS = {"question", "document", "signature", "fee", "login", "submit", "other"}
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+STAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}")
+OWNER_FIELDS = ("approved_at", "submitted_by_owner_at", "outcome", "outcome_amount_usd", "outcome_at")
+
+
+def record(path):
+    """Check one applications/<slug>.json against the schema in config/spec.md."""
+    errs, warns = [], []
+    p = Path(path)
+    try:
+        r = json.loads(p.read_text())
+    except (OSError, ValueError) as e:
+        return report([f"not readable JSON: {e}"], [])
+    if not isinstance(r, dict):
+        return report(["the record must be a JSON object"], [])
+    slug = str(r.get("slug", ""))
+    if not re.match(r"^[a-z0-9][a-z0-9-]{0,120}$", slug):
+        errs.append("slug must be lowercase letters, digits and hyphens")
+    elif p.stem != slug:
+        errs.append(f"file name {p.name} does not match slug {slug}")
+    for k in ("funder", "program", "summary", "url"):
+        if not str(r.get(k, "")).strip():
+            errs.append(f"{k} is missing; the owner sees it on the dashboard")
+    if r.get("url") and not str(r["url"]).startswith(("https://", "http://")):
+        errs.append("url must be the funder's web address")
+    if r.get("tier") not in ("A", "B", "C"):
+        errs.append("tier must be A, B or C")
+    st = r.get("status")
+    if st not in STATUSES:
+        errs.append(f"status must be one of: {', '.join(sorted(STATUSES))}")
+    for k in ("deadline", "opens"):
+        if r.get(k) and not DATE_RE.match(str(r[k])):
+            errs.append(f"{k} must be YYYY-MM-DD")
+    for k in ("submitted_at", "updated_at"):
+        if r.get(k) and not STAMP_RE.match(str(r[k])):
+            errs.append(f"{k} must be YYYY-MM-DDTHH:MM")
+    if not r.get("updated_at"):
+        errs.append("updated_at is missing")
+    for k in ("award_max_usd", "amount_requested_usd"):
+        if r.get(k) not in (None, "") and not isinstance(r[k], (int, float)):
+            errs.append(f"{k} must be a number, not text")
+    if st == "SUBMITTED" and not r.get("submitted_at"):
+        errs.append("a SUBMITTED record needs submitted_at")
+    if st == "WATCH" and not r.get("opens"):
+        warns.append("a WATCH record without opens shows 'Opening date not announced'")
+    needs = r.get("needs") or []
+    if not isinstance(needs, list):
+        errs.append("needs must be a list")
+        needs = []
+    ids = set()
+    for i, n in enumerate(needs):
+        if not isinstance(n, dict):
+            errs.append(f"needs[{i}] must be an object")
+            continue
+        nid = str(n.get("id", ""))
+        if not re.match(r"^[A-Za-z0-9_-]{1,40}$", nid):
+            errs.append(f"needs[{i}].id must be letters, digits, - or _ (the dashboard drops it otherwise)")
+        if nid in ids:
+            errs.append(f"needs[{i}].id {nid} is used twice")
+        ids.add(nid)
+        if n.get("kind") not in NEED_KINDS:
+            errs.append(f"needs[{i}].kind must be one of: {', '.join(sorted(NEED_KINDS))}")
+        if not str(n.get("ask", "")).strip():
+            errs.append(f"needs[{i}].ask is missing: write it as a plain question or instruction to the owner")
+        if not str(n.get("why", "")).strip():
+            warns.append(f"needs[{i}].why is empty; say in one sentence why the form needs it")
+    if st in ("NEEDS HUMAN", "FOR YOU") and not needs:
+        errs.append(f"a {st} record must list what the owner has to do in needs")
+    for k in OWNER_FIELDS:
+        if k in r:
+            warns.append(f"{k} belongs in config/owner-input.json, which only the dashboard writes; drop it here")
+    if r.get("doc") and not (ROOT / str(r["doc"])).is_file():
+        warns.append(f"doc {r['doc']} does not exist yet")
+    if r.get("screenshot") and not (ROOT / str(r["screenshot"])).is_file():
+        errs.append(f"screenshot {r['screenshot']} does not exist")
+    return report(errs, warns)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -200,9 +284,13 @@ def main():
     p = sub.add_parser("budget")
     p.add_argument("budget")
     p.add_argument("--max-award", type=float)
+    p = sub.add_parser("record")
+    p.add_argument("record")
     a = ap.parse_args()
     if a.cmd == "lint":
         sys.exit(lint(a.answer, a.max_words, a.max_chars, a.funder))
+    if a.cmd == "record":
+        sys.exit(record(a.record))
     sys.exit(budget(a.budget, a.max_award))
 
 
