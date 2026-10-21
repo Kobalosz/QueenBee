@@ -43,10 +43,9 @@ Then:
 > the QueenBee folder (e.g. to `~/QueenBee`) or grant Full Disk Access to `/bin/bash` before
 > installing the schedule.
 
-## The dashboard (for the owner)
+## The Grants app (for the owner)
 
-The owner never has to open a terminal. They double-click **Open Grants Dashboard** in the
-`grants` folder (setup offers to put it on the Desktop), and a page opens in their browser:
+The owner never has to open a terminal. They open **Grants** like any other Mac app:
 
 - **The top line answers "do I need to do anything?"** in a sentence: "Two things need you." or
   "Nothing needs you right now."
@@ -55,26 +54,44 @@ The owner never has to open a terminal. They double-click **Open Grants Dashboar
   logins get a link to the funder's page and an "I've done this" button.
 - **Waiting for your OK** (approve mode): read the application, then "Approve for sending".
 - **Ready for you to submit:** federal and state packages, with the checklist and a button that
-  opens the files.
+  opens the files in Finder.
 - **Sent:** every application that went out, the amount asked for, the full text and the
   confirmation screenshot, and "We won it" / "Not selected" buttons to record the result.
 - **Deadlines** down the side, soonest first, with the ones that need the owner marked.
 
-The agent picks up whatever the owner did on its next run. The dashboard runs only on this computer
-(it listens on 127.0.0.1, checks every request for a per-launch token, and refuses requests sent
-under any other host name). It writes only `config/owner-input.json` and uploads under
-`data/docs/`, both gitignored; the agent reads that file and can never edit it.
+**How it stays current.** The app watches the grants folder. The moment the agent writes or
+updates an application record (`applications/<slug>.json`), finishes a run, or starts one, the
+window redraws, with no refresh button and no polling server. A one-minute check runs as a safety
+net. What the owner does goes into `config/owner-input.json`, which the agent reads at the start of
+its next run and is not allowed to edit. **The app does not learn on its own whether a grant was
+won:** funders send results by email or letter, so the owner records them with "We won it" or
+"Not selected".
+
+**How it is built.** Electron, in `app/`. There is no web server and no open port: the window talks
+to the app's own background process, which is the only part that touches files. The window runs
+sandboxed with no access to Node or the disk, loads only its own files under a strict content
+security policy, opens funder links in the regular browser, and bundles its font so it works
+offline.
 
 ```bash
-python3 scripts/dashboard.py --open   # what the double-click runs
-python3 scripts/dashboard.py --demo   # the same page with made-up sample data, to preview it
+cd app
+npm install
+npm run demo   # the app with made-up sample data, to preview it
+npm start      # the app on this grants folder
+npm run dist   # build Grants.dmg in app/dist/ to install on the owner's Mac
+npm run check  # syntax checks and the self-test
 ```
+
+On first launch an installed app asks for the grants folder once and remembers it. The build is not
+signed with an Apple Developer ID yet, so macOS asks for confirmation the first time: right-click
+the app, choose Open, then Open again. Signing and notarizing removes that step and needs a paid
+Apple Developer account.
 
 ## What it does with each grant
 
 | Tier | What it is | What happens |
 |---|---|---|
-| **A · web form** | A funder's own online form or a portal the owner is signed into. Most corporate and foundation small-business grants. | Filled and, in `auto` mode, submitted. In `approve` mode, drafted and sent after the owner approves it on the dashboard. |
+| **A · web form** | A funder's own online form or a portal the owner is signed into. Most corporate and foundation small-business grants. | Filled and, in `auto` mode, submitted. In `approve` mode, drafted and sent after the owner approves it in the Grants app. |
 | **B · package** | Federal (Grants.gov), state, or anything built from uploaded documents. | A complete package in `applications/files/<slug>/`: narrative, budget, form values, attachments list, and a checklist with the deadline on top. **The owner submits.** |
 | **C · inquiry** | A letter of inquiry, usually by email. | A drafted letter, never sent. |
 
@@ -97,7 +114,7 @@ writes are gitignored and never leave the machine.
 
 | Key | Does what |
 |---|---|
-| `submission.mode` | `auto`: scheduled runs submit Tier A grants that clear every gate. `approve`: runs draft; nothing is sent until the owner clicks "Approve for sending" on the dashboard. |
+| `submission.mode` | `auto`: scheduled runs submit Tier A grants that clear every gate. `approve`: runs draft; nothing is sent until the owner clicks "Approve for sending" in the Grants app. |
 | `submission.max_application_fee_usd` | Default 0. Any fee sends the grant to the owner's FOR YOU list. |
 | `submission.allow_checkbox_certification` | Tick "this information is accurate" boxes. Default on, because every fact is owner-confirmed. |
 | `submission.allow_typed_signature` | Default off: a signature field means the owner finishes it. |
