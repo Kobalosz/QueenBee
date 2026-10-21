@@ -49,7 +49,7 @@ def source_text():
     for p in ("config/answers.md", "config/profile.json", "config/owner-input.json"):
         f = ROOT / p
         if f.is_file():
-            parts.append(f.read_text())
+            parts.append(f.read_text(encoding="utf-8"))
     return "\n".join(parts)
 
 
@@ -105,14 +105,14 @@ def report(errs, warns):
 
 def default_max_words():
     try:
-        s = json.loads((ROOT / "config/settings.json").read_text())
+        s = json.loads((ROOT / "config/settings.json").read_text(encoding="utf-8"))
         return int(s.get("documents", {}).get("narrative_max_words_default", 300))
     except (OSError, ValueError):
         return 300
 
 
 def lint(path, max_words=None, max_chars=None, funder=""):
-    body = Path(path).read_text().strip()
+    body = Path(path).read_text(encoding="utf-8").strip()
     errs, warns = [], []
     if not body:
         return report(["empty answer"], [])
@@ -160,7 +160,7 @@ def lint(path, max_words=None, max_chars=None, funder=""):
 
 
 def budget(path, max_award=None):
-    text = Path(path).read_text()
+    text = Path(path).read_text(encoding="utf-8")
     errs, warns = [], []
     src = source_text()
     src_money = {money_value(m.group()) for m in MONEY_RE.finditer(src)}
@@ -205,7 +205,7 @@ def record(path):
     errs, warns = [], []
     p = Path(path)
     try:
-        r = json.loads(p.read_text())
+        r = json.loads(p.read_text(encoding="utf-8"))
     except (OSError, ValueError) as e:
         return report([f"not readable JSON: {e}"], [])
     if not isinstance(r, dict):
@@ -274,6 +274,11 @@ def record(path):
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("lint")
