@@ -18,7 +18,7 @@
   },
   "submission": {
     "mode": "auto",
-    "_mode_note": "auto: scheduled runs submit simple web-form grants (Tier A in config/spec.md) that clear every gate. approve: scheduled runs only draft; every application waits as READY FOR APPROVAL in data/queue.md until the client says yes in an interactive session. Federal, state and package grants (Tier B) are never submitted by the agent in either mode.",
+    "_mode_note": "auto: scheduled runs submit simple web-form grants (Tier A in config/spec.md) that clear every gate. approve: scheduled runs draft; every application waits as READY FOR APPROVAL until the owner clicks 'Approve for sending' on the dashboard, and the next run sends it. Federal, state and package grants (Tier B) are never submitted by the agent in either mode.",
     "allow_checkbox_certification": true,
     "_checkbox_note": "A checkbox like 'I certify this information is accurate' may be ticked, because every fact on the form comes from the client's confirmed files. false: any such checkbox makes the application NEEDS HUMAN.",
     "allow_typed_signature": false,
