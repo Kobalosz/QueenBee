@@ -81,23 +81,104 @@ complete that submitting it is a 20-minute task for the client.
    answer, the URL, the amount requested, and today's date.
    - `auto`: submit with a real click, screenshot the confirmation (JPG) into `screenshots/`, mark
      SUBMITTED.
-   - `approve`: do not open the form on a scheduled run. Write the doc, mark READY FOR APPROVAL in
-     `data/queue.md`. The client approves in an interactive session, and then you open the form,
-     fill it from the approved doc, show it, and submit.
+   - `approve`: write the doc and mark READY FOR APPROVAL. The owner reads it on the dashboard and
+     clicks "Approve for sending", which sets `approved_at` in `config/owner-input.json`. On the
+     next run, re-verify the program is still open, fill the form from the approved doc **without
+     changing a word**, and submit. If the form asks something the approved doc does not answer,
+     do not improvise: mark NEEDS HUMAN with the new question.
 6. **Tier B:** write the package (see `config/documents.md`, "Packages"), a `CHECKLIST.md` listing
    every remaining step the client must take with the deadline at the top, and mark PACKAGE READY.
 7. **Tier C:** write the inquiry letter, mark FOR YOU with the address to send it to.
 8. **Blocked at any point** (login wall, missing fact, missing document, signature) → NEEDS HUMAN,
-   with what is missing, in the doc and the log.
-9. **Tab hygiene:** see `CLAUDE.md`. One reused tab, and the tab group closed at the end.
+   with each missing thing as one entry in the record's `needs`.
+9. **Write the application record** (below) every time the status changes, and run
+   `python3 scripts/grant_docs.py record applications/<slug>.json` until it prints OK.
+10. **Tab hygiene:** see `CLAUDE.md`. One reused tab, and the tab group closed at the end.
+
+## The application record (what the owner's dashboard shows)
+The owner is not technical and reads everything through the dashboard
+(`scripts/dashboard.py`), which reads one JSON file per application:
+`applications/<slug>.json`, next to `applications/<slug>.md`. Write it for every program that
+reached step 3, including SKIP and WATCH, so the owner can see what was considered.
+
+```json
+{
+  "slug": "acme-foundation-growth-grant-2026-11",
+  "funder": "Acme Foundation",
+  "program": "Growth Grant",
+  "tier": "A",
+  "status": "NEEDS HUMAN",
+  "entity": "business",
+  "url": "https://acme.org/grants/growth",
+  "deadline": "2026-11-30",
+  "opens": "",
+  "award_max_usd": 10000,
+  "amount_requested_usd": 8000,
+  "summary": "One plain sentence the owner understands: what this grant is and where it stands.",
+  "submitted_at": "",
+  "updated_at": "2026-10-21T09:14",
+  "doc": "applications/acme-foundation-growth-grant-2026-11.md",
+  "screenshot": "screenshots/acme-foundation-growth-grant-2026-11.jpg",
+  "needs": [
+    {"id": "county", "kind": "question",
+     "ask": "Which county is the business in?",
+     "why": "This grant is only for businesses in Franklin County, and your files do not say."}
+  ]
+}
+```
+
+- `status` is one of the statuses below, or `DRAFTING` while work is in progress.
+- `needs` lists every single thing the owner must do, one per entry. `kind` is `question` (the
+  dashboard shows an answer box), `document` (an upload button), or `signature`, `fee`, `login`,
+  `submit`, `other` (a "Mark as done" button next to the funder's link). A NEEDS HUMAN or FOR YOU
+  record with an empty `needs` fails the check.
+- **Write `ask` and `why` for the owner, not for yourself.** Plain words, no file names, no field
+  names, no jargon. "What were the business's total sales last year?", not
+  "annual_revenue_last_fiscal_year missing". `why` says in one sentence why the form needs it.
+- Keep an `id` stable for the same need across runs, so an answer the owner already gave stays
+  attached to it.
+- Never write `approved_at`, `submitted_by_owner_at`, or `outcome` fields into the record. Those
+  are the owner's, they live only in `config/owner-input.json`, and the dashboard ignores them
+  anywhere else.
+
+## What the owner sends back
+`config/owner-input.json` holds what the owner did on the dashboard, keyed by slug. Read it at the
+start of every run. You never edit it.
+
+```json
+{"acme-foundation-growth-grant-2026-11": {
+   "needs": {"county": {"answer": "Franklin County", "answered_at": "2026-10-22T19:03"},
+             "w9": {"file": "data/docs/acme-foundation-growth-grant-2026-11-w9.pdf", "answered_at": "..."},
+             "signature": {"done_at": "2026-10-23T08:40"}},
+   "approved_at": "2026-10-23T08:41",
+   "submitted_by_owner_at": "",
+   "outcome": "AWARDED", "outcome_amount_usd": 5000, "outcome_at": "2026-12-15T10:02"}}
+```
+
+- An `answer` is a fact the owner confirmed. Use it for that application, and treat it as sourced
+  (`grant_docs.py lint` already does). When the same fact will be needed again (headcount, county,
+  a new budget item), list it under "Facts to add to answers.md" in `state/status.md` so it is folded
+  into the fact sheet at the next interactive session.
+- A `file` is a document the owner uploaded; attach it from that path.
+- `done_at` on a signature, fee, login or submit need means the owner did it outside the agent.
+  Re-check the funder's page before assuming the application went through.
+- `submitted_by_owner_at` on a package means the owner submitted it. Mark the record SUBMITTED with
+  `submitted_at` set to that time.
+- An `outcome` goes into the application doc, the log, and `data/funder-notes.md`.
+
+## The run summary
+At the end of every run, write `state/last_run.json`:
+`{"finished_at": "2026-10-26T09:41", "submitted": 1, "drafted": 2, "needs_you": 3, "note": "One plain sentence for the owner."}`.
+The dashboard shows when the last check happened from it.
 
 ## Statuses
 `SUBMITTED` · `READY FOR APPROVAL` · `PACKAGE READY` · `FOR YOU` · `NEEDS HUMAN` · `WATCH` (opens
 later) · `SKIP` (ineligible or poor fit, one line with the reason) · `TOO TIGHT` (deadline inside the
 lead time).
 
-Later, the client reports results: `AWARDED $X` · `DECLINED`. Record them in the doc and the log;
-they decide which funders are worth another cycle.
+Later, the owner reports results on the dashboard (`outcome` in `config/owner-input.json`):
+AWARDED with an amount, or DECLINED. Record them in the doc and the log; they decide which funders
+are worth another cycle.
 
 ## Log entry format (append to logs/grants-log.md before each submit)
 ```
@@ -115,6 +196,8 @@ they decide which funders are worth another cycle.
 1. A summary at the top of `logs/grants-log.md`: submitted, ready for approval, packages ready,
    needs human, and the next deadlines in date order.
 2. A new status block at the top of `state/status.md`: what was done, what was skipped and why,
-   what is on Watch and when it opens, and any new lesson about a funder or a portal. This is what
-   the next run reads instead of re-researching.
-3. Close every tab in the group.
+   what is on Watch and when it opens, facts the owner gave that belong in `answers.md`, and any
+   new lesson about a funder or a portal. This is what the next run reads instead of re-researching.
+3. Every touched `applications/<slug>.json` passes `grant_docs.py record`, and
+   `state/last_run.json` is written.
+4. Close every tab in the group.
