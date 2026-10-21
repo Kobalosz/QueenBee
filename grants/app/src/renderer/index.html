@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grants</title>
+<link rel="stylesheet" href="../../node_modules/@fontsource/public-sans/400.css">
+<link rel="stylesheet" href="../../node_modules/@fontsource/public-sans/500.css">
+<link rel="stylesheet" href="../../node_modules/@fontsource/public-sans/600.css">
+<link rel="stylesheet" href="../../node_modules/@fontsource/public-sans/800.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="demo" class="demo" hidden><div class="wrap">Sample data. Nothing here is real, and anything you change disappears when you quit.</div></div>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">Grants <span id="biz"></span></div>
+    <div class="clock" id="clock"></div>
+  </div>
+</header>
+<div id="running" class="running" hidden><div class="wrap">The agent is working right now. This window updates on its own.</div></div>
+
+<main class="wrap">
+  <section class="hero" aria-live="polite">
+    <h1 id="headline">Loading…</h1>
+    <p id="subline"></p>
+    <div id="hero-actions" class="actions" hidden></div>
+  </section>
+  <div class="layout">
+    <div id="main"></div>
+    <aside id="aside" aria-label="Deadlines"></aside>
+  </div>
+</main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
