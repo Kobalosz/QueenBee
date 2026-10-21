@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CLIENT DATA — never commit. Everything here is about one specific business.
+# The tracked *.example.* files are the templates setup copies from.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# The client's identity, narratives and run settings
+config/profile.json
+config/answers.md
+config/settings.json
+
+# The client's documents (W-9, financials, business plan, IRS letter, photos)
+data/docs/
+data/*.pdf
+data/*.doc
+data/*.docx
+data/*.xlsx
+data/*.png
+data/*.jpg
+
+# The working queue
+data/queue.md
+
+# Everything the agent produces about the client
+applications/
+logs/
+screenshots/
+state/
+
+# Run artifacts
+.run.lock/
+*.log
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local Claude Code settings (may contain machine-specific paths)
+.claude/settings.local.json
+
+# Explicitly keep the templates
+!config/profile.example.json
+!config/answers.example.md
+!config/settings.example.json
+!data/queue.example.md
