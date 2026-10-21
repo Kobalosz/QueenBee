@@ -81,7 +81,7 @@ complete that submitting it is a 20-minute task for the client.
    answer, the URL, the amount requested, and today's date.
    - `auto`: submit with a real click, screenshot the confirmation (JPG) into `screenshots/`, mark
      SUBMITTED.
-   - `approve`: write the doc and mark READY FOR APPROVAL. The owner reads it on the dashboard and
+   - `approve`: write the doc and mark READY FOR APPROVAL. The owner reads it in the app and
      clicks "Approve for sending", which sets `approved_at` in `config/owner-input.json`. On the
      next run, re-verify the program is still open, fill the form from the approved doc **without
      changing a word**, and submit. If the form asks something the approved doc does not answer,
@@ -95,9 +95,9 @@ complete that submitting it is a 20-minute task for the client.
    `python3 scripts/grant_docs.py record applications/<slug>.json` until it prints OK.
 10. **Tab hygiene:** see `CLAUDE.md`. One reused tab, and the tab group closed at the end.
 
-## The application record (what the owner's dashboard shows)
-The owner is not technical and reads everything through the dashboard
-(`scripts/dashboard.py`), which reads one JSON file per application:
+## The application record (what the owner's Grants app shows)
+The owner is not technical and reads everything through the Grants app (`app/`), which watches
+this folder and reads one JSON file per application:
 `applications/<slug>.json`, next to `applications/<slug>.md`. Write it for every program that
 reached step 3, including SKIP and WATCH, so the owner can see what was considered.
 
@@ -129,7 +129,7 @@ reached step 3, including SKIP and WATCH, so the owner can see what was consider
 
 - `status` is one of the statuses below, or `DRAFTING` while work is in progress.
 - `needs` lists every single thing the owner must do, one per entry. `kind` is `question` (the
-  dashboard shows an answer box), `document` (an upload button), or `signature`, `fee`, `login`,
+  app shows an answer box), `document` (an upload button), or `signature`, `fee`, `login`,
   `submit`, `other` (a "Mark as done" button next to the funder's link). A NEEDS HUMAN or FOR YOU
   record with an empty `needs` fails the check.
 - **Write `ask` and `why` for the owner, not for yourself.** Plain words, no file names, no field
@@ -138,11 +138,11 @@ reached step 3, including SKIP and WATCH, so the owner can see what was consider
 - Keep an `id` stable for the same need across runs, so an answer the owner already gave stays
   attached to it.
 - Never write `approved_at`, `submitted_by_owner_at`, or `outcome` fields into the record. Those
-  are the owner's, they live only in `config/owner-input.json`, and the dashboard ignores them
+  are the owner's, they live only in `config/owner-input.json`, and the app ignores them
   anywhere else.
 
 ## What the owner sends back
-`config/owner-input.json` holds what the owner did on the dashboard, keyed by slug. Read it at the
+`config/owner-input.json` holds what the owner did in the app, keyed by slug. Read it at the
 start of every run. You never edit it.
 
 ```json
@@ -169,14 +169,14 @@ start of every run. You never edit it.
 ## The run summary
 At the end of every run, write `state/last_run.json`:
 `{"finished_at": "2026-10-26T09:41", "submitted": 1, "drafted": 2, "needs_you": 3, "note": "One plain sentence for the owner."}`.
-The dashboard shows when the last check happened from it.
+The app shows when the last check happened from it.
 
 ## Statuses
 `SUBMITTED` · `READY FOR APPROVAL` · `PACKAGE READY` · `FOR YOU` · `NEEDS HUMAN` · `WATCH` (opens
 later) · `SKIP` (ineligible or poor fit, one line with the reason) · `TOO TIGHT` (deadline inside the
 lead time).
 
-Later, the owner reports results on the dashboard (`outcome` in `config/owner-input.json`):
+Later, the owner reports results in the app (`outcome` in `config/owner-input.json`):
 AWARDED with an amount, or DECLINED. Record them in the doc and the log; they decide which funders
 are worth another cycle.
 
