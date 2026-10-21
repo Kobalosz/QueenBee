@@ -19,6 +19,10 @@ JSON sweeps first, a real browser only for real forms, everything written down b
 8. `config/owner-input.json`: what the owner answered, uploaded, approved, or reported in the
    Grants app since the last run. Act on it first; it is the owner talking to you.
 
+**This runs on Windows as well as macOS and Linux.** Commands in these files say `python3`; on
+Windows, type `python` instead (Claude Code there runs in Git Bash, where `python3` usually does
+not exist). Read and write files as UTF-8.
+
 **The owner sees your work only through the Grants app** (`app/`), which reads the
 `applications/<slug>.json` records described in `config/spec.md` and updates the moment you write one. A record that is missing, stale,
 or written in jargon is work the owner cannot see or act on.
