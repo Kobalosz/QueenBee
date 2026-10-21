@@ -65,15 +65,19 @@ The owner never has to open a terminal. They open **Grants** like any other Mac 
   opens the files in File Explorer (Finder on a Mac).
 - **Sent:** every application that went out, the amount asked for, the full text and the
   confirmation screenshot, and "We won it" / "Not selected" buttons to record the result.
+- **From your inbox** (with the [grant-results agent](../grant-results/)): what funders emailed
+  about sent applications, in their own words: "Acme Foundation says you won $7,500," with
+  **Record as won** or **That's not right**, and replies they are waiting for, with the date.
 - **Deadlines** down the side, soonest first, with the ones that need the owner marked.
 
 **How it stays current.** The app watches the grants folder. The moment the agent writes or
 updates an application record (`applications/<slug>.json`), finishes a run, or starts one, the
-window redraws, with no refresh button and no polling server. A one-minute check runs as a safety
+window redraws, with no refresh button and no polling server. The same goes for new funder
+emails found by the grant-results agent. A one-minute check runs as a safety
 net. What the owner does goes into `config/owner-input.json`, which the agent reads at the start of
-its next run and is not allowed to edit. **The app does not learn on its own whether a grant was
-won:** funders send results by email or letter, so the owner records them with "We won it" or
-"Not selected".
+its next run and is not allowed to edit. **Results come from the owner:** with the grant-results agent
+set up, a funder's decision email arrives as a suggestion to confirm; without it, or for a letter
+or a phone call, the owner records it with "We won it" or "Not selected".
 
 **How it is built.** Electron, in `app/`. There is no web server and no open port: the window talks
 to the app's own background process, which is the only part that touches files. The window runs
