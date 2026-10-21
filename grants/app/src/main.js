@@ -20,6 +20,7 @@ let watcher = null;
 let demoRoot = null;
 
 app.setName("Grants");
+if (process.platform === "win32") app.setAppUserModelId("com.queenbee.grants");
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on("second-instance", () => {
   if (!win) return;

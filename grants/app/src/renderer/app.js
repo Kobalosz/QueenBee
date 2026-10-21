@@ -401,7 +401,7 @@ document.addEventListener("click", async (e) => {
       act(api.submitted, { slug }, b, "Marked as submitted. It's now under Sent.");
       break;
     case "reveal": {
-      const r = await act(api.reveal, { slug }, b, "Opened the folder in Finder.");
+      const r = await act(api.reveal, { slug }, b, "Opened the folder.");
       if (r.ok) b.disabled = false;
       break;
     }
