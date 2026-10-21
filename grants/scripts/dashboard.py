@@ -39,6 +39,7 @@ SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,120}$")
 NEED_RE = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
 MAX_UPLOAD = 15 * 1024 * 1024
 MAX_ANSWER = 5000
+OWNER_FIELDS = ("approved_at", "submitted_by_owner_at", "outcome", "outcome_amount_usd", "outcome_at")
 LOCK = threading.Lock()
 
 
@@ -94,13 +95,17 @@ class Store:
             rec = read_json(f, None)
             if not isinstance(rec, dict) or not SLUG_RE.match(str(rec.get("slug", ""))):
                 continue
+            # Approvals, "I submitted it" and results are the owner's alone: only owner-input.json
+            # may set them, so a record that carries them is ignored on those fields.
+            for k in OWNER_FIELDS:
+                rec.pop(k, None)
             mine = owner.get(rec["slug"], {})
             # Need ids end up inside button handlers on the page, so a malformed one is dropped.
             rec["needs"] = [n for n in rec.get("needs") or [] if isinstance(n, dict) and NEED_RE.match(str(n.get("id", "")))]
             for n in rec["needs"]:
                 n.update({k: v for k, v in (mine.get("needs") or {}).get(str(n.get("id")), {}).items()
                           if k in ("answer", "file", "answered_at", "done_at")})
-            for k in ("approved_at", "submitted_by_owner_at", "outcome", "outcome_amount_usd", "outcome_at"):
+            for k in OWNER_FIELDS:
                 if mine.get(k) not in (None, ""):
                     rec[k] = mine[k]
             rec["has_doc"] = (self.root / "applications" / f"{rec['slug']}.md").is_file()
@@ -331,7 +336,7 @@ def demo_root():
         {"slug": "sample-foundation-growth-2026", "funder": "Sample Family Foundation", "program": "Growth Grant",
          "tier": "A", "status": "SUBMITTED", "deadline": day(-40), "submitted_at": ago(45),
          "award_max_usd": 15000, "amount_requested_usd": 15000, "url": "https://example.org/growth",
-         "summary": "A grant toward new equipment.", "outcome": "AWARDED", "outcome_amount_usd": 7500},
+         "summary": "A grant toward new equipment."},
         {"slug": "sample-national-accelerator-2027", "funder": "Sample National Network", "program": "Spring Grants",
          "tier": "A", "status": "WATCH", "deadline": "", "opens": day(70), "award_max_usd": 20000,
          "url": "https://example.org/spring", "summary": "Opens in the spring. The agent will check back then."},
@@ -345,6 +350,8 @@ def demo_root():
         (root / "applications" / f"{r['slug']}.md").write_text(
             f"# {r['funder']} — {r['program']}\n\n- Deadline: {r['deadline'] or 'not set'}\n\n"
             "## Describe your business\nThis is sample text. In a real run, every answer the agent wrote appears here.\n")
+    (root / "config/owner-input.json").write_text(json.dumps({"sample-foundation-growth-2026": {
+        "outcome": "AWARDED", "outcome_amount_usd": 7500, "outcome_at": ago(10)}}))
     pk = root / "applications" / "files" / "sample-state-workforce-training-2026"
     pk.mkdir(parents=True)
     (pk / "CHECKLIST.md").write_text(
