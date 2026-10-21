@@ -1,0 +1,185 @@
+:root {
+  --paper: #F2F3EE;
+  --sheet: #FFFFFF;
+  --ink: #1E2A23;
+  --slate: #5D6A62;
+  --rule: #D3D8CD;
+  --honey: #E0A21B;
+  --honey-ink: #7A5200;
+  --honey-wash: #FFF5DA;
+  --leaf: #2E6A4E;
+  --leaf-wash: #E4F0E8;
+  --alarm: #A33A2B;
+  --focus: #E0A21B;
+  --font: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --demo: #3B4A8C;
+  --demo-wash: #E7EAF7;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #151B17;
+    --sheet: #1D2520;
+    --ink: #E9EDE6;
+    --slate: #A3AFA7;
+    --rule: #34403A;
+    --honey: #E8B140;
+    --honey-ink: #F0C463;
+    --honey-wash: #2E2813;
+    --leaf: #7BC29C;
+    --leaf-wash: #1C3027;
+    --alarm: #F08A7B;
+    --demo: #B9C3F0;
+    --demo-wash: #232A45;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 17px/1.55 var(--font);
+  font-variant-numeric: tabular-nums;
+}
+a { color: inherit; text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+/* Header */
+.top { border-bottom: 1px solid var(--rule); }
+.top .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between; padding-top: 18px; padding-bottom: 16px; }
+.brand { font-weight: 600; font-size: 16px; }
+.brand span { color: var(--slate); font-weight: 400; }
+.clock { color: var(--slate); font-size: 15px; display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.running { background: var(--leaf-wash); color: var(--leaf); }
+.running .wrap { padding-top: 10px; padding-bottom: 10px; font-size: 15px; font-weight: 500; }
+
+/* Hero: the one bold thing on the page */
+.hero { padding: 56px 0 36px; }
+.hero h1 {
+  margin: 0;
+  font-size: clamp(34px, 6vw, 61px);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  max-width: 18ch;
+  text-wrap: balance;
+}
+.hero h1.calm { color: var(--leaf); }
+.hero p { margin: 16px 0 0; font-size: 20px; color: var(--slate); max-width: 52ch; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 56px; padding-bottom: 80px; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; gap: 40px; } }
+
+h2 { font-size: 25px; line-height: 1.2; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; }
+.section { margin-bottom: 48px; }
+.section > .lede { color: var(--slate); margin: 0 0 18px; max-width: 60ch; }
+
+/* Slips: things that need the owner */
+.slips { display: grid; gap: 16px; }
+.slip {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-left: 5px solid var(--honey);
+  border-radius: 6px;
+  padding: 20px 22px 22px;
+}
+.slip-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; font-size: 15px; color: var(--slate); }
+.slip-head strong { color: var(--ink); font-weight: 600; }
+.due-soon { color: var(--alarm); font-weight: 600; }
+.ask { font-size: 20px; line-height: 1.4; font-weight: 500; margin: 10px 0 4px; max-width: 60ch; }
+.why { color: var(--slate); margin: 0 0 16px; max-width: 64ch; }
+textarea, input[type=text] {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+textarea { min-height: 88px; resize: vertical; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+button, .button {
+  font: 600 16px/1 var(--font);
+  border-radius: 6px;
+  padding: 12px 18px;
+  border: 1.5px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+button.quiet, .button.quiet { background: transparent; color: var(--ink); }
+button.link { border: 0; background: none; color: var(--ink); padding: 6px 0; text-decoration: underline; text-underline-offset: 3px; font-weight: 500; }
+button:disabled { opacity: .5; cursor: progress; }
+.answered { margin-top: 12px; padding: 10px 12px; background: var(--leaf-wash); color: var(--leaf); border-radius: 4px; font-weight: 500; }
+
+/* Rows: things already handled */
+.rows { border-top: 1px solid var(--rule); }
+.row { border-bottom: 1px solid var(--rule); }
+.row > button.rowbtn {
+  all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 20px; padding: 14px 4px;
+}
+.row > button.rowbtn:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.row-title { font-weight: 600; }
+.row-sub { color: var(--slate); font-size: 15px; grid-column: 1; }
+.row-right { text-align: right; font-size: 15px; grid-row: 1 / span 2; grid-column: 2; align-self: center; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 14px; font-weight: 600; background: var(--paper); color: var(--slate); border: 1px solid var(--rule); }
+.pill.won { background: var(--leaf-wash); color: var(--leaf); border-color: transparent; }
+.detail { padding: 2px 4px 20px; }
+.detail p { margin: 0 0 10px; max-width: 64ch; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0 0 14px; font-size: 15px; }
+.facts dt { color: var(--slate); }
+.facts dd { margin: 0; }
+.doc { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 16px 20px; margin-top: 12px; max-height: 480px; overflow: auto; font-size: 16px; }
+.doc h3, .doc h4 { margin: 18px 0 6px; font-size: 18px; }
+.doc h3:first-child, .doc h4:first-child { margin-top: 0; }
+.doc p, .doc li { max-width: 68ch; }
+.shot { max-width: 100%; border: 1px solid var(--rule); border-radius: 4px; margin-top: 12px; }
+.outcome { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+.outcome input { width: 140px; }
+
+details.more { margin-top: 8px; }
+details.more > summary { cursor: pointer; font-weight: 600; font-size: 18px; padding: 8px 0; }
+details.more > summary span { color: var(--slate); font-weight: 400; }
+
+/* Deadlines: a true date sequence */
+aside h2 { font-size: 20px; }
+.dates { list-style: none; margin: 14px 0 0; padding: 0; border-left: 2px solid var(--rule); }
+.dates li { position: relative; padding: 0 0 18px 18px; }
+.dates li::before { content: ""; position: absolute; left: -6px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--paper); border: 2px solid var(--slate); }
+.dates li.mine::before { background: var(--honey); border-color: var(--honey); }
+.dates .when { font-weight: 600; }
+.dates .what { color: var(--slate); font-size: 15px; line-height: 1.4; }
+.empty-aside { color: var(--slate); }
+
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0;
+  background: var(--ink); color: var(--paper); padding: 12px 18px; border-radius: 6px; font-weight: 500;
+  transition: opacity .2s, transform .2s; pointer-events: none; max-width: calc(100% - 32px);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.bad { background: var(--alarm); color: #fff; }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+@media (max-width: 560px) {
+  .wrap { padding: 0 16px; }
+  .hero { padding: 36px 0 24px; }
+  .hero p { font-size: 18px; }
+  .slip { padding: 16px 16px 18px; }
+  .row > button.rowbtn { grid-template-columns: 1fr; }
+  .row-right { grid-row: auto; grid-column: 1; text-align: left; }
+}
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* The sample-data notice, so nobody mistakes the demo for their business */
+.demo { background: var(--demo-wash); color: var(--demo); }
+.demo .wrap { padding-top: 10px; padding-bottom: 10px; font-size: 15px; font-weight: 500; }
+.hero .actions { margin-top: 24px; }
+/* Reading is easier without selectable chrome; the content stays selectable. */
+.top, button, .button, summary { -webkit-user-select: none; user-select: none; }
