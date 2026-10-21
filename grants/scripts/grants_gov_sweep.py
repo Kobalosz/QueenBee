@@ -37,6 +37,18 @@ MAX_PAGES = 3           # per keyword
 # Grants.gov applicant-type codes.
 SMALL_BUSINESS, NONPROFIT_501C3, NONPROFIT_OTHER, OTHERS, UNRESTRICTED = "23", "12", "13", "25", "99"
 
+
+def _utf8_stdout():
+    # Windows consoles default to a legacy code page and fail on characters such as ★ or —.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
+_utf8_stdout()
+
 args = sys.argv[1:]
 dry = "--dry" in args
 LIMIT = int(args[args.index("--limit") + 1]) if "--limit" in args else None
@@ -45,7 +57,7 @@ TODAY = datetime.date.today()
 
 def load(p, default):
     try:
-        with open(p) as f:
+        with open(p, encoding="utf-8") as f:
             return json.load(f)
     except (OSError, ValueError):
         return default
@@ -219,9 +231,9 @@ for oid, h in sorted(hits.items(), key=lambda kv: parse_date(kv[1].get("closeDat
     })
 
 os.makedirs(OUT, exist_ok=True)
-with open(os.path.join(OUT, "federal.json"), "w") as f:
+with open(os.path.join(OUT, "federal.json"), "w", encoding="utf-8") as f:
     json.dump(rows, f, indent=1)
-with open(CACHE_FILE, "w") as f:
+with open(CACHE_FILE, "w", encoding="utf-8") as f:
     json.dump(cache, f)
 
 print(f"keywords {KEYWORDS}  as {sorted(codes.values())}  hits {len(hits)}  kept {len(rows)}  "
@@ -246,5 +258,5 @@ if not dry and not timed_out and LIMIT is None:
     now = TODAY.isoformat()
     for r in rows:
         seen.setdefault(r["id"], now)
-    with open(SEEN_FILE, "w") as f:
+    with open(SEEN_FILE, "w", encoding="utf-8") as f:
         json.dump(seen, f)
