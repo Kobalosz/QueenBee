@@ -128,6 +128,9 @@ reached step 3, including SKIP and WATCH, so the owner can see what was consider
 ```
 
 - `status` is one of the statuses below, or `DRAFTING` while work is in progress.
+- `funder_email_domains` (optional): domains the funder emails from when they differ from its
+  website, as stated on the program page or in its confirmation email (`["acmefoundation.org"]`).
+  The grant-results agent uses them to recognize the funder's decision email.
 - `needs` lists every single thing the owner must do, one per entry. `kind` is `question` (the
   app shows an answer box), `document` (an upload button), or `signature`, `fee`, `login`,
   `submit`, `other` (a "Mark as done" button next to the funder's link). A NEEDS HUMAN or FOR YOU
@@ -165,6 +168,16 @@ start of every run. You never edit it.
 - `submitted_by_owner_at` on a package means the owner submitted it. Mark the record SUBMITTED with
   `submitted_at` set to that time.
 - An `outcome` goes into the application doc, the log, and `data/funder-notes.md`.
+- `email` holds the owner's answer to each funder email the grant-results agent surfaced:
+  `{"f-1a2b3c4d5e6f": {"confirmed_at": "..."}}` or `{"dismissed_at": "..."}`. Confirming a
+  "won" or "not selected" email also sets `outcome`, so you see it the same way.
+
+## Funder emails
+The grant-results agent (`../grant-results`) reads funders' emails about submitted applications and
+writes what they say to `state/email-findings.json`: won, not selected, a reply needed, or an update,
+each with the funder's exact words. The Grants app shows them to the owner, and only the owner's
+confirmation turns one into a result. Read the file for context (a NEEDS_REPLY the owner has not
+answered is worth a line in the run summary), but never edit it.
 
 ## The run summary
 At the end of every run, write `state/last_run.json`:
