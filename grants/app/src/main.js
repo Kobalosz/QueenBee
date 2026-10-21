@@ -233,7 +233,18 @@ handle("choose-folder", async () => {
 // ── Lifecycle ────────────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   useRoot(findRoot());
+  if (DEMO) console.log(`Demo folder: ${demoRoot}`);
   createWindow();
+  // Development check, never in the packaged app: QB_SNAPSHOT=out.png npm run demo renders the
+  // window to a PNG after QB_SNAPSHOT_DELAY ms (default 1500) and quits.
+  if (!app.isPackaged && process.env.QB_SNAPSHOT) {
+    win.webContents.once("did-finish-load", () =>
+      setTimeout(async () => {
+        fs.writeFileSync(process.env.QB_SNAPSHOT, (await win.webContents.capturePage()).toPNG());
+        app.quit();
+      }, Number(process.env.QB_SNAPSHOT_DELAY) || 1500)
+    );
+  }
   app.on("activate", () => {
     if (!win) createWindow();
   });
