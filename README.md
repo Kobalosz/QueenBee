@@ -6,7 +6,7 @@ client's machine.
 
 | Agent | Status | What it does |
 |---|---|---|
-| [`grants/`](grants/) | First build | Finds small-business and nonprofit grants, writes the applications from the owner's real facts, submits simple web-form grants, and prepares federal and state packages for the owner to submit. |
+| [`grants/`](grants/) | First build | Finds small-business and nonprofit grants, writes the applications from the owner's real facts, submits simple web-form grants, and prepares federal and state packages for the owner to submit. The owner follows along in the Grants app. |
 
 ## Conventions for every agent
 - **The client's facts live in gitignored config** (`config/*.json`, `config/*.md` without
