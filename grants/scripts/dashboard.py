@@ -25,6 +25,7 @@ import os
 import re
 import secrets
 import shutil
+import subprocess
 import sys
 import tempfile
 import threading
@@ -94,7 +95,9 @@ class Store:
             if not isinstance(rec, dict) or not SLUG_RE.match(str(rec.get("slug", ""))):
                 continue
             mine = owner.get(rec["slug"], {})
-            for n in rec.get("needs") or []:
+            # Need ids end up inside button handlers on the page, so a malformed one is dropped.
+            rec["needs"] = [n for n in rec.get("needs") or [] if isinstance(n, dict) and NEED_RE.match(str(n.get("id", "")))]
+            for n in rec["needs"]:
                 n.update({k: v for k, v in (mine.get("needs") or {}).get(str(n.get("id")), {}).items()
                           if k in ("answer", "file", "answered_at", "done_at")})
             for k in ("approved_at", "submitted_by_owner_at", "outcome", "outcome_amount_usd", "outcome_at"):
@@ -259,6 +262,13 @@ def make_handler(store, token, port):
                 store.update(slug, lambda e: e.setdefault("needs", {}).setdefault(need, {}).update(
                     file=rel, answered_at=now()))
                 return self.send(200, {"ok": True, "file": rel})
+            if path == "/api/reveal":
+                # Opens the package folder in Finder (or the Linux file manager) on this computer.
+                folder = store.root / "applications" / "files" / slug
+                if not folder.is_dir():
+                    return self.send(404, {"error": "The files for this application are not there any more."})
+                subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open", str(folder)])
+                return self.send(200, {"ok": True})
             if path == "/api/approve":
                 store.update(slug, lambda e: e.update(approved_at=now()))
                 return self.send(200, {"ok": True})
