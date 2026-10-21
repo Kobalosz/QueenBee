@@ -6,9 +6,8 @@ sorted by deadline, soonest first. One line per program per cycle.
 Line shape: `- [ ] YYYY-MM-DD deadline · Funder — Program · Tier · $max · URL · note`
 
 ## Ready for approval
-Drafted, linted, waiting for the client's yes (approve mode, or anything the agent was unsure of).
-The doc in `applications/` holds every answer. Tell Claude "submit the approved ones" in an
-interactive session.
+Drafted, linted, waiting for the owner's yes (approve mode). The doc in `applications/` holds
+every answer. The owner approves on the dashboard and the next run sends it.
 
 ## Packages ready (for the client to submit)
 Tier B. Each folder in `applications/files/` has a `CHECKLIST.md` with the remaining steps.
