@@ -16,11 +16,11 @@ JSON sweeps first, a real browser only for real forms, everything written down b
 5. `config/spec.md` (tiers, hard rules, procedure, log format) and `config/documents.md` (how to write).
 6. `data/queue.md`, `data/funders.md`, `data/sources.md`, `data/funder-notes.md`.
 7. `state/status.md` (what previous runs did) and `logs/grants-log.md` (what is already sent).
-8. `config/owner-input.json`: what the owner answered, uploaded, approved, or reported on the
-   dashboard since the last run. Act on it first; it is the owner talking to you.
+8. `config/owner-input.json`: what the owner answered, uploaded, approved, or reported in the
+   Grants app since the last run. Act on it first; it is the owner talking to you.
 
-**The owner sees your work only through the dashboard** (`scripts/dashboard.py`), which reads the
-`applications/<slug>.json` records described in `config/spec.md`. A record that is missing, stale,
+**The owner sees your work only through the Grants app** (`app/`), which reads the
+`applications/<slug>.json` records described in `config/spec.md` and updates the moment you write one. A record that is missing, stale,
 or written in jargon is work the owner cannot see or act on.
 
 ## ★ FIRST RUN — a fresh folder has no config. Onboard, do not apply. ★
@@ -83,13 +83,14 @@ can collect answers from the owner and relay them; say so.
 7. **Offer to install the schedule** and, on a yes, run `./scripts/schedule.sh install` for them.
    If this folder is under ~/Documents, ~/Desktop or ~/Downloads, say that macOS blocks background
    jobs there and offer the fix (move the folder, or Full Disk Access for /bin/bash).
-8. **Show them the dashboard.** Start it with `python3 scripts/dashboard.py --open` and walk
-   through it in two sentences: the top line says whether anything needs them, and they answer
-   questions, upload files, approve, and record results right on the page. Tell them that from now
-   on they open it by double-clicking **Open Grants Dashboard** in the grants folder, and offer to
-   put an alias on their Desktop (`ln -s "$(pwd)/Open Grants Dashboard.command" ~/Desktop/`). Say that
-   it runs only on this computer and the window that opens with it must stay open while they use it.
-   If they would like a preview before any real run, `--demo` shows it with made-up sample data.
+8. **Give them the Grants app.** It is the only thing they will open from now on. If `app/dist/`
+   has no build yet, run `cd app && npm install && npm run dist` (needs Node; ask first if it is
+   missing) and open the `.dmg` it makes so they can drag **Grants** into Applications. On first
+   launch it asks for the grants folder: point it at this folder. Walk through it in two sentences:
+   the top line says whether anything needs them, and they answer questions, upload files, approve,
+   and record results right in the window. If they want a look before any real run,
+   `cd app && npm run demo` opens it with made-up sample data. Say plainly that the app is not
+   signed by Apple yet, so the first open is right-click, Open, then Open again.
 9. **Mention the optional add-ons in one short list, without pushing:** signing in to Submittable
    or Hello Alice in Chrome (then add the host to `channels.signed_in_portals`); SAM.gov
    registration if they want federal grants and have none.
@@ -104,8 +105,8 @@ can collect answers from the owner and relay them; say so.
 ### How much rope (say this plainly during setup)
 - **auto:** scheduled runs submit simple web-form grants on their own once they clear every gate.
   The first one is supervised so the owner can see the quality first.
-- **approve:** scheduled runs research and draft. Nothing is sent until the owner reads it on the
-  dashboard and clicks "Approve for sending"; the next run sends it, word for word.
+- **approve:** scheduled runs research and draft. Nothing is sent until the owner reads it in the
+  Grants app and clicks "Approve for sending"; the next run sends it, word for word.
 - **Either way,** federal and state grants are never submitted by the agent: they are signed by the
   business's authorized representative under penalty of law. The agent prepares them.
 
@@ -121,13 +122,12 @@ grants/
 ├── CLAUDE.md                # THIS FILE: the playbook
 ├── README.md                # human-facing overview
 ├── run.sh                   # one bounded headless run (reads config/settings.json)
-├── Open Grants Dashboard.command  # double-click: the owner's dashboard
-├── dashboard/index.html     # the dashboard page
+├── app/                     # the owner's Grants app (Electron); npm run demo / npm run dist
 ├── config/
 │   ├── settings.json        # run knobs, submission mode, targets       (gitignored)
 │   ├── profile.json         # business, nonprofit, owner, documents     (gitignored)
 │   ├── answers.md           # narratives, budget presets, fact sheet    (gitignored)
-│   ├── owner-input.json     # what the owner did on the dashboard; read-only for you (gitignored)
+│   ├── owner-input.json     # what the owner did in the app; read-only for you (gitignored)
 │   ├── spec.md              # tiers, hard rules, procedure, log format
 │   └── documents.md         # how to write narratives, budgets, packages
 ├── data/
@@ -144,7 +144,6 @@ grants/
     ├── grants_gov_sweep.py  # federal opportunities via the Grants.gov API
     ├── funder_sweep.py      # which funder pages changed since last run
     ├── grant_docs.py        # lint narratives, verify budgets, check application records
-    ├── dashboard.py         # the owner's local dashboard (127.0.0.1 only)
     ├── dupe_check.sh        # has this program already been applied to this cycle?
     ├── schedule.sh          # install/remove the recurring run
     └── scheduled_run.sh     # what the scheduler calls
@@ -242,7 +241,7 @@ Exit 3 is a hard skip. Exit 1 means read the hits: the same program in the same 
 One application per funder per run. Respect a program's stated limits (one per business per year,
 no reapplying after an award) and record them in `data/funder-notes.md`.
 
-## Owner input: what came back from the dashboard
+## Owner input: what came back from the app
 At the start of every run, read `config/owner-input.json` (format in `config/spec.md`) and act on it
 before sourcing anything new:
 - **Answers and uploads** unblock NEEDS HUMAN applications. Use them, finish the application, and
@@ -258,7 +257,7 @@ You never write to `config/owner-input.json`. If an answer looks wrong or contra
 entry that names both values.
 
 ## Results
-When the owner records an outcome on the dashboard (or tells you in chat), put `AWARDED $X` or
+When the owner records an outcome in the app (or tells you in chat), put `AWARDED $X` or
 `DECLINED` in the application doc, the log, and the queue's Done section, and add a line to
 `data/funder-notes.md` (what the funder said, when it reopens). An award usually comes with
 reporting duties: list them in the doc and add them to the record's `needs` as `other` items with
