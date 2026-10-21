@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F2F3EE;
+    --sheet: #FFFFFF;
+    --ink: #1E2A23;
+    --slate: #5D6A62;
+    --rule: #D3D8CD;
+    --honey: #E0A21B;
+    --honey-ink: #7A5200;
+    --honey-wash: #FFF5DA;
+    --leaf: #2E6A4E;
+    --leaf-wash: #E4F0E8;
+    --alarm: #A33A2B;
+    --focus: #E0A21B;
+    --font: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #151B17;
+      --sheet: #1D2520;
+      --ink: #E9EDE6;
+      --slate: #A3AFA7;
+      --rule: #34403A;
+      --honey: #E8B140;
+      --honey-ink: #F0C463;
+      --honey-wash: #2E2813;
+      --leaf: #7BC29C;
+      --leaf-wash: #1C3027;
+      --alarm: #F08A7B;
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 17px/1.55 var(--font);
+    font-variant-numeric: tabular-nums;
+  }
+  a { color: inherit; text-underline-offset: 3px; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* Header */
+  .top { border-bottom: 1px solid var(--rule); }
+  .top .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between; padding-top: 18px; padding-bottom: 16px; }
+  .brand { font-weight: 600; font-size: 16px; }
+  .brand span { color: var(--slate); font-weight: 400; }
+  .clock { color: var(--slate); font-size: 15px; display: flex; flex-wrap: wrap; gap: 4px 20px; }
+  .running { background: var(--leaf-wash); color: var(--leaf); }
+  .running .wrap { padding-top: 10px; padding-bottom: 10px; font-size: 15px; font-weight: 500; }
+
+  /* Hero: the one bold thing on the page */
+  .hero { padding: 56px 0 36px; }
+  .hero h1 {
+    margin: 0;
+    font-size: clamp(34px, 6vw, 61px);
+    line-height: 1.05;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    max-width: 18ch;
+    text-wrap: balance;
+  }
+  .hero h1.calm { color: var(--leaf); }
+  .hero p { margin: 16px 0 0; font-size: 20px; color: var(--slate); max-width: 52ch; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 56px; padding-bottom: 80px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; gap: 40px; } }
+
+  h2 { font-size: 25px; line-height: 1.2; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .section { margin-bottom: 48px; }
+  .section > .lede { color: var(--slate); margin: 0 0 18px; max-width: 60ch; }
+
+  /* Slips: things that need the owner */
+  .slips { display: grid; gap: 16px; }
+  .slip {
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    border-left: 5px solid var(--honey);
+    border-radius: 6px;
+    padding: 20px 22px 22px;
+  }
+  .slip-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; font-size: 15px; color: var(--slate); }
+  .slip-head strong { color: var(--ink); font-weight: 600; }
+  .due-soon { color: var(--alarm); font-weight: 600; }
+  .ask { font-size: 20px; line-height: 1.4; font-weight: 500; margin: 10px 0 4px; max-width: 60ch; }
+  .why { color: var(--slate); margin: 0 0 16px; max-width: 64ch; }
+  textarea, input[type=text] {
+    width: 100%;
+    font: inherit;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 10px 12px;
+  }
+  textarea { min-height: 88px; resize: vertical; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+  button, .button {
+    font: 600 16px/1 var(--font);
+    border-radius: 6px;
+    padding: 12px 18px;
+    border: 1.5px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+  button.quiet, .button.quiet { background: transparent; color: var(--ink); }
+  button.link { border: 0; background: none; color: var(--ink); padding: 6px 0; text-decoration: underline; text-underline-offset: 3px; font-weight: 500; }
+  button:disabled { opacity: .5; cursor: progress; }
+  .answered { margin-top: 12px; padding: 10px 12px; background: var(--leaf-wash); color: var(--leaf); border-radius: 4px; font-weight: 500; }
+  .filepick { font: inherit; max-width: 100%; width: 300px; }
+
+  /* Rows: things already handled */
+  .rows { border-top: 1px solid var(--rule); }
+  .row { border-bottom: 1px solid var(--rule); }
+  .row > button.rowbtn {
+    all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 20px; padding: 14px 4px;
+  }
+  .row > button.rowbtn:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+  .row-title { font-weight: 600; }
+  .row-sub { color: var(--slate); font-size: 15px; grid-column: 1; }
+  .row-right { text-align: right; font-size: 15px; grid-row: 1 / span 2; grid-column: 2; align-self: center; }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 14px; font-weight: 600; background: var(--paper); color: var(--slate); border: 1px solid var(--rule); }
+  .pill.won { background: var(--leaf-wash); color: var(--leaf); border-color: transparent; }
+  .detail { padding: 2px 4px 20px; }
+  .detail p { margin: 0 0 10px; max-width: 64ch; }
+  .facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0 0 14px; font-size: 15px; }
+  .facts dt { color: var(--slate); }
+  .facts dd { margin: 0; }
+  .doc { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 16px 20px; margin-top: 12px; max-height: 480px; overflow: auto; font-size: 16px; }
+  .doc h3, .doc h4 { margin: 18px 0 6px; font-size: 18px; }
+  .doc h3:first-child, .doc h4:first-child { margin-top: 0; }
+  .doc p, .doc li { max-width: 68ch; }
+  .shot { max-width: 100%; border: 1px solid var(--rule); border-radius: 4px; margin-top: 12px; }
+  .outcome { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+  .outcome input { width: 140px; }
+
+  details.more { margin-top: 8px; }
+  details.more > summary { cursor: pointer; font-weight: 600; font-size: 18px; padding: 8px 0; }
+  details.more > summary span { color: var(--slate); font-weight: 400; }
+
+  /* Deadlines: a true date sequence */
+  aside h2 { font-size: 20px; }
+  .dates { list-style: none; margin: 14px 0 0; padding: 0; border-left: 2px solid var(--rule); }
+  .dates li { position: relative; padding: 0 0 18px 18px; }
+  .dates li::before { content: ""; position: absolute; left: -6px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--paper); border: 2px solid var(--slate); }
+  .dates li.mine::before { background: var(--honey); border-color: var(--honey); }
+  .dates .when { font-weight: 600; }
+  .dates .what { color: var(--slate); font-size: 15px; line-height: 1.4; }
+  .empty-aside { color: var(--slate); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0;
+    background: var(--ink); color: var(--paper); padding: 12px 18px; border-radius: 6px; font-weight: 500;
+    transition: opacity .2s, transform .2s; pointer-events: none; max-width: calc(100% - 32px);
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast.bad { background: var(--alarm); color: #fff; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+  @media (max-width: 560px) {
+    .wrap { padding: 0 16px; }
+    .hero { padding: 36px 0 24px; }
+    .hero p { font-size: 18px; }
+    .slip { padding: 16px 16px 18px; }
+    .row > button.rowbtn { grid-template-columns: 1fr; }
+    .row-right { grid-row: auto; grid-column: 1; text-align: left; }
+  }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">Grants <span id="biz"></span></div>
+    <div class="clock" id="clock"></div>
+  </div>
+</header>
+<div id="running" class="running" hidden><div class="wrap">The agent is working right now. This page updates on its own.</div></div>
+
+<main class="wrap">
+  <section class="hero" aria-live="polite">
+    <h1 id="headline">Loading…</h1>
+    <p id="subline"></p>
+  </section>
+  <div class="layout">
+    <div id="main"></div>
+    <aside id="aside" aria-label="Deadlines"></aside>
+  </div>
+</main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+const TOKEN = "__TOKEN__";
+const NUM = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+const usd = n => n == null || n === "" ? "" : new Intl.NumberFormat("en-US", {style: "currency", currency: "USD", maximumFractionDigits: 0}).format(n);
+let STATE = null;
+const drafts = {};          // unsent answers survive refreshes
+const open = new Set();     // expanded rows survive refreshes
+
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c])); }
+function parseDay(s) { if (!s) return null; const [y, m, d] = s.slice(0, 10).split("-").map(Number); return y ? new Date(y, m - 1, d) : null; }
+function daysFrom(s) { const d = parseDay(s); if (!d) return null; const t = parseDay(STATE.today); return Math.round((d - t) / 86400000); }
+function shortDate(s, withDay) {
+  const d = s && s.length > 10 ? new Date(s) : parseDay(s);
+  if (!d || isNaN(d)) return "";
+  return d.toLocaleDateString("en-US", withDay ? {weekday: "long", month: "long", day: "numeric"} : {month: "short", day: "numeric", year: d.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined});
+}
+function relDays(n) {
+  if (n == null) return "";
+  if (n === 0) return "today";
+  if (n === 1) return "tomorrow";
+  if (n === -1) return "yesterday";
+  return n > 0 ? `in ${n} days` : `${-n} days ago`;
+}
+function dueText(a) {
+  if (!a.deadline) return "";
+  const n = daysFrom(a.deadline);
+  const t = `Due ${shortDate(a.deadline)}, ${relDays(n)}`;
+  return n != null && n <= 7 ? `<span class="due-soon">${esc(t)}</span>` : esc(t);
+}
+function title(a) { return `${a.funder}${a.program ? ", " + a.program : ""}`; }
+
+function md(text) {
+  // A small, safe Markdown subset: everything is escaped first.
+  const lines = esc(text).split(/\n/);
+  let out = "", list = null;
+  const inline = s => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  const close = () => { if (list) { out += `</${list}>`; list = null; } };
+  for (const raw of lines) {
+    const l = raw.trimEnd();
+    let m;
+    if ((m = l.match(/^#{1,2}\s+(.*)/))) { close(); out += `<h3>${inline(m[1])}</h3>`; }
+    else if ((m = l.match(/^#{3,6}\s+(.*)/))) { close(); out += `<h4>${inline(m[1])}</h4>`; }
+    else if ((m = l.match(/^\s*[-*]\s+(?:\[[ x]\]\s+)?(.*)/))) { if (list !== "ul") { close(); out += "<ul>"; list = "ul"; } out += `<li>${inline(m[1])}</li>`; }
+    else if ((m = l.match(/^\s*\d+[.)]\s+(.*)/))) { if (list !== "ol") { close(); out += "<ol>"; list = "ol"; } out += `<li>${inline(m[1])}</li>`; }
+    else if (!l.trim()) { close(); }
+    else { close(); out += `<p>${inline(l)}</p>`; }
+  }
+  close();
+  return out;
+}
+
+// ── What goes where ──────────────────────────────────────────────────────────────
+function openNeeds(a) { return (a.needs || []).filter(n => !n.answered_at && !n.done_at); }
+function classify(a) {
+  const st = a.status || "";
+  if (st === "SKIP" || st === "TOO TIGHT") return "passed";
+  if (st === "WATCH") return "later";
+  if (st === "SUBMITTED" || a.submitted_by_owner_at) return "sent";
+  if (openNeeds(a).length) return "todo";
+  if (st === "READY FOR APPROVAL") return a.approved_at ? "working" : "approve";
+  if (st === "PACKAGE READY") return "submit";
+  return "working";
+}
+
+function render() {
+  const s = STATE, apps = s.applications;
+  document.getElementById("biz").textContent = s.business ? s.business : "";
+  document.title = s.business ? `Grants for ${s.business}` : "Grants";
+  document.getElementById("running").hidden = !s.running;
+  const clock = [];
+  if (s.last_run && s.last_run.finished_at) clock.push(`Last checked ${shortDate(s.last_run.finished_at)} at ${new Date(s.last_run.finished_at).toLocaleTimeString("en-US", {hour: "numeric", minute: "2-digit"})}`);
+  clock.push(s.next_run ? `Next check ${shortDate(s.next_run, true)}` : "Checks only when started by hand");
+  document.getElementById("clock").innerHTML = clock.map(c => `<span>${esc(c)}</span>`).join("");
+
+  const by = {todo: [], approve: [], submit: [], sent: [], working: [], later: [], passed: []};
+  apps.forEach(a => by[classify(a)].push(a));
+  const byDeadline = (x, y) => (x.deadline || "9999").localeCompare(y.deadline || "9999");
+  Object.values(by).forEach(l => l.sort(byDeadline));
+  by.sent.sort((x, y) => (y.submitted_at || y.submitted_by_owner_at || "").localeCompare(x.submitted_at || x.submitted_by_owner_at || ""));
+
+  const needCount = by.todo.reduce((n, a) => n + openNeeds(a).length, 0);
+  const total = needCount + by.approve.length + by.submit.length;
+  const h1 = document.getElementById("headline"), sub = document.getElementById("subline");
+  if (!s.configured) {
+    h1.textContent = "The grant agent isn't set up yet."; h1.className = "";
+    sub.textContent = "Open the grants folder in Claude Code and say “set us up”. This page fills in after the first run.";
+  } else if (total === 0) {
+    h1.textContent = "Nothing needs you right now."; h1.className = "calm";
+    sub.textContent = apps.length ? `The agent keeps looking for grants${s.next_run ? " and checks again " + shortDate(s.next_run, true) : ""}.` : "The agent hasn't found or written anything yet. Results appear here after its first run.";
+  } else {
+    h1.textContent = `${NUM[total] || total} ${total === 1 ? "thing needs" : "things need"} you.`; h1.className = "";
+    const parts = [];
+    const w = n => (NUM[n] || String(n)).toLowerCase();
+    if (needCount) parts.push(`${needCount === 1 ? "a question or task" : w(needCount) + " questions or tasks"} on applications the agent is writing`);
+    if (by.approve.length) parts.push(`${by.approve.length === 1 ? "an application" : w(by.approve.length) + " applications"} waiting for your OK`);
+    if (by.submit.length) parts.push(`${by.submit.length === 1 ? "a package" : w(by.submit.length) + " packages"} ready for you to submit`);
+    sub.textContent = parts.length ? cap(listJoin(parts)) + "." : "";
+  }
+
+  let html = "";
+  if (by.todo.length) html += section("Help the agent finish", "Answer here and the agent uses it on its next run. Your answers are saved on this computer only.", `<div class="slips">${by.todo.map(todoSlips).join("")}</div>`);
+  if (by.approve.length) html += section("Waiting for your OK", "These are written and ready. Read each one, then approve it and the agent sends it on its next run.", `<div class="slips">${by.approve.map(approveSlip).join("")}</div>`);
+  if (by.submit.length) html += section("Ready for you to submit", "Government and larger grants have to be submitted by you. Everything is prepared; the checklist says what is left.", `<div class="slips">${by.submit.map(submitSlip).join("")}</div>`);
+  html += section("Sent", by.sent.length ? "" : "Nothing has been sent yet. Applications appear here as soon as they go out.", by.sent.length ? `<div class="rows">${by.sent.map(sentRow).join("")}</div>` : "");
+  if (by.working.length) html += section("The agent is on it", "Nothing needed from you. These move forward on the next run.", `<div class="rows">${by.working.map(workingRow).join("")}</div>`);
+  if (by.later.length || by.passed.length) {
+    html += `<div class="section">`;
+    if (by.later.length) html += `<details class="more"><summary>Opening later <span>(${by.later.length})</span></summary><div class="rows">${by.later.map(laterRow).join("")}</div></details>`;
+    if (by.passed.length) html += `<details class="more"><summary>Passed on <span>(${by.passed.length})</span></summary><div class="rows">${by.passed.map(passedRow).join("")}</div></details>`;
+    html += `</div>`;
+  }
+  document.getElementById("main").innerHTML = html;
+
+  const upcoming = apps.filter(a => a.deadline && daysFrom(a.deadline) >= 0 && ["todo", "approve", "submit", "working"].includes(classify(a))).sort(byDeadline);
+  document.getElementById("aside").innerHTML = `<h2>Deadlines</h2>` + (upcoming.length
+    ? `<ol class="dates">${upcoming.map(a => `<li class="${["todo", "approve", "submit"].includes(classify(a)) ? "mine" : ""}"><div class="when">${esc(shortDate(a.deadline))}, ${esc(relDays(daysFrom(a.deadline)))}</div><div class="what">${esc(title(a))}${["todo", "approve", "submit"].includes(classify(a)) ? ". Needs you." : ""}</div></li>`).join("")}</ol>`
+    : `<p class="empty-aside">No open deadlines.</p>`);
+
+  for (const [k, v] of Object.entries(drafts)) { const el = document.getElementById("ans-" + k); if (el) el.value = v; }
+  open.forEach(id => { const el = document.getElementById("detail-" + id); if (el) { el.hidden = false; loadDetail(id); } });
+}
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function listJoin(p) { return p.length < 3 ? p.join(" and ") : p.slice(0, -1).join(", ") + ", and " + p.at(-1); }
+function section(h, lede, body) { return `<section class="section"><h2>${esc(h)}</h2>${lede ? `<p class="lede">${esc(lede)}</p>` : ""}${body}</section>`; }
+
+// ── Slips ───────────────────────────────────────────────────────────────────────
+function slipHead(a) { return `<div class="slip-head"><strong>${esc(title(a))}</strong><span>${dueText(a)}</span></div>`; }
+function todoSlips(a) {
+  return openNeeds(a).map(n => {
+    const key = `${a.slug}--${n.id}`;
+    let act;
+    if (n.kind === "question") {
+      act = `<label class="sr" for="ans-${key}">Your answer</label><textarea id="ans-${key}" data-key="${key}" oninput="drafts[this.dataset.key]=this.value"></textarea>
+        <div class="actions"><button onclick="answer('${a.slug}','${n.id}',this)">Send answer</button></div>`;
+    } else if (n.kind === "document") {
+      act = `<div class="actions"><label class="sr" for="file-${key}">Choose the file</label><input class="filepick" type="file" id="file-${key}" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.txt">
+        <button onclick="upload('${a.slug}','${n.id}',this)">Upload file</button></div>`;
+    } else {
+      const go = a.url && ["signature", "fee", "login", "submit"].includes(n.kind) ? `<a class="button quiet" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">Open the funder's page</a>` : "";
+      act = `<div class="actions">${go}<button onclick="done('${a.slug}','${n.id}',this)">I've done this</button></div>`;
+    }
+    return `<article class="slip">${slipHead(a)}<p class="ask">${esc(n.ask)}</p>${n.why ? `<p class="why">${esc(n.why)}</p>` : ""}${act}</article>`;
+  }).join("");
+}
+function docToggle(a, label, file) {
+  const id = `${a.slug}${file ? "--" + file.replace(/\W/g, "") : ""}`;
+  return `<button class="link" aria-expanded="${open.has(id)}" aria-controls="detail-${id}" onclick="toggle('${id}',this)">${esc(label)}</button>
+    <div id="detail-${id}" data-slug="${a.slug}" data-file="${esc(file || "")}" hidden></div>`;
+}
+function approveSlip(a) {
+  return `<article class="slip">${slipHead(a)}<p class="ask">${esc(a.summary || "Ready to send.")}</p>
+    <p class="why">Asking for ${esc(usd(a.amount_requested_usd) || "an amount set by the program")}${a.award_max_usd ? ` of up to ${esc(usd(a.award_max_usd))}` : ""}.</p>
+    ${a.has_doc ? docToggle(a, "Read the application") : ""}
+    <div class="actions"><button onclick="approve('${a.slug}',this)">Approve for sending</button></div></article>`;
+}
+function submitSlip(a) {
+  const checklist = a.package_files.includes("CHECKLIST.md");
+  return `<article class="slip">${slipHead(a)}<p class="ask">${esc(a.summary || "The package is ready.")}</p>
+    <p class="why">Asking for ${esc(usd(a.amount_requested_usd) || "an amount set by the program")}.</p>
+    ${checklist ? docToggle(a, "Read the checklist", "CHECKLIST.md") : ""}
+    <div class="actions">${a.package_files.length ? `<button class="quiet" onclick="reveal('${a.slug}',this)">Show the files</button>` : ""}
+    ${a.url ? `<a class="button quiet" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">Open the funder's page</a>` : ""}
+    <button onclick="submitted('${a.slug}',this)">I submitted it</button></div></article>`;
+}
+
+// ── Rows ────────────────────────────────────────────────────────────────────────
+function row(a, sub, right, inner) {
+  return `<div class="row"><button class="rowbtn" aria-expanded="${open.has(a.slug)}" aria-controls="detail-${a.slug}" onclick="toggle('${a.slug}',this)">
+    <span class="row-title">${esc(title(a))}</span><span class="row-right">${right}</span><span class="row-sub">${sub}</span></button>
+    <div id="detail-${a.slug}" class="detail" data-slug="${a.slug}" hidden>${inner || ""}</div></div>`;
+}
+function facts(a) {
+  const f = [];
+  if (a.amount_requested_usd) f.push(["Asked for", usd(a.amount_requested_usd)]);
+  if (a.award_max_usd) f.push(["Program maximum", usd(a.award_max_usd)]);
+  if (a.deadline) f.push(["Deadline", shortDate(a.deadline)]);
+  if (a.opens) f.push(["Opens", shortDate(a.opens)]);
+  const when = a.submitted_at || a.submitted_by_owner_at;
+  if (when) f.push(["Sent", shortDate(when) + (a.submitted_by_owner_at && !a.submitted_at ? ", by you" : "")]);
+  return `<dl class="facts">${f.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`;
+}
+function detailBody(a, withOutcome) {
+  return `${a.summary ? `<p>${esc(a.summary)}</p>` : ""}${facts(a)}
+    <div class="actions">${a.url ? `<a class="button quiet" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">Open the funder's page</a>` : ""}</div>
+    ${withOutcome ? outcomeControls(a) : ""}<div class="doc-slot"></div>`;
+}
+function outcomeControls(a) {
+  if (a.outcome === "AWARDED") return `<div class="outcome"><span class="pill won">Won ${esc(usd(a.outcome_amount_usd))}</span><button class="link" onclick="outcome('${a.slug}','',this)">Undo</button></div>`;
+  if (a.outcome === "DECLINED") return `<div class="outcome"><span class="pill">Not selected</span><button class="link" onclick="outcome('${a.slug}','',this)">Undo</button></div>`;
+  return `<div class="outcome"><span>Heard back?</span>
+    <label class="sr" for="amt-${a.slug}">Amount won</label><input type="text" inputmode="decimal" id="amt-${a.slug}" placeholder="Amount won">
+    <button class="quiet" onclick="outcome('${a.slug}','AWARDED',this)">We won it</button>
+    <button class="quiet" onclick="outcome('${a.slug}','DECLINED',this)">Not selected</button></div>`;
+}
+function sentRow(a) {
+  const when = a.submitted_at || a.submitted_by_owner_at;
+  const right = a.outcome === "AWARDED" ? `<span class="pill won">Won ${esc(usd(a.outcome_amount_usd))}</span>`
+    : a.outcome === "DECLINED" ? `<span class="pill">Not selected</span>` : `<span class="pill">Waiting to hear</span>`;
+  return row(a, esc(`Sent ${shortDate(when)}${a.amount_requested_usd ? ", asked for " + usd(a.amount_requested_usd) : ""}`), right, detailBody(a, true));
+}
+function workingRow(a) {
+  const why = a.approved_at ? "You approved it. The agent sends it on its next run."
+    : (a.needs || []).length ? "You answered. The agent finishes it on its next run." : "The agent is still writing this one.";
+  return row(a, esc(why), dueText(a), detailBody(a, false));
+}
+function laterRow(a) { return row(a, esc(a.opens ? `Opens ${shortDate(a.opens)}` : "Opening date not announced"), a.award_max_usd ? esc("Up to " + usd(a.award_max_usd)) : "", detailBody(a, false)); }
+function passedRow(a) { return row(a, esc(a.summary || "Not a fit."), "", detailBody(a, false)); }
+
+async function toggle(id, btn) {
+  const el = document.getElementById("detail-" + id);
+  const show = el.hidden;
+  el.hidden = !show; btn.setAttribute("aria-expanded", show);
+  show ? open.add(id) : open.delete(id);
+  if (show) loadDetail(id);
+}
+async function loadDetail(id) {
+  const el = document.getElementById("detail-" + id);
+  const slug = el.dataset.slug, file = el.dataset.file;
+  const a = STATE.applications.find(x => x.slug === slug);
+  const slot = el.classList.contains("detail") ? el.querySelector(".doc-slot") : el;
+  if (!slot || slot.dataset.loaded) return;
+  slot.dataset.loaded = "1";
+  let html = "";
+  if (file || (a && a.has_doc)) {
+    const r = await fetch(`/api/doc?slug=${encodeURIComponent(slug)}${file ? "&file=" + encodeURIComponent(file) : ""}`);
+    if (r.ok) html += `<div class="doc">${md((await r.json()).text)}</div>`;
+  }
+  if (!file && a && a.has_screenshot) html += `<img class="shot" alt="Confirmation page after sending" src="/api/screenshot?slug=${encodeURIComponent(slug)}">`;
+  slot.innerHTML = html;
+}
+
+// ── Actions ─────────────────────────────────────────────────────────────────────
+async function post(path, body, btn, okMsg) {
+  if (btn) btn.disabled = true;
+  try {
+    const r = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json", "X-Dashboard-Token": TOKEN}, body: JSON.stringify(body)});
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || "That didn't save. Try again.");
+    toast(okMsg);
+    await refresh(true);
+    return true;
+  } catch (e) {
+    toast(e.message === "Failed to fetch" ? "The dashboard has stopped. Open it again from the grants folder." : e.message, true);
+    if (btn) btn.disabled = false;
+    return false;
+  }
+}
+async function answer(slug, id, btn) {
+  const key = `${slug}--${id}`, el = document.getElementById("ans-" + key);
+  if (!el.value.trim()) { toast("Write an answer first.", true); el.focus(); return; }
+  if (await post("/api/answer", {slug, need_id: id, answer: el.value}, btn, "Answer sent. The agent uses it on its next run.")) delete drafts[key];
+}
+async function upload(slug, id, btn) {
+  const f = document.getElementById(`file-${slug}--${id}`).files[0];
+  if (!f) { toast("Choose a file first.", true); return; }
+  if (f.size > 15 * 1024 * 1024) { toast("That file is larger than 15 MB.", true); return; }
+  const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(f); });
+  post("/api/upload", {slug, need_id: id, filename: f.name, data}, btn, "File uploaded. The agent attaches it on its next run.");
+}
+function done(slug, id, btn) { post("/api/done", {slug, need_id: id}, btn, "Marked as done."); }
+async function reveal(slug, btn) { if (await post("/api/reveal", {slug}, btn, "Opened the folder in a new window.")) btn.disabled = false; }
+function approve(slug, btn) { post("/api/approve", {slug}, btn, "Approved. The agent sends it on its next run."); }
+function submitted(slug, btn) { post("/api/submitted", {slug}, btn, "Marked as submitted. It's now under Sent."); }
+function outcome(slug, value, btn) {
+  const amt = document.getElementById("amt-" + slug);
+  post("/api/outcome", {slug, outcome: value, amount: amt ? amt.value : ""}, btn,
+    value === "AWARDED" ? "Congratulations. Recorded as won." : value === "DECLINED" ? "Recorded as not selected." : "Result cleared.");
+}
+
+let toastTimer;
+function toast(msg, bad) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.className = "toast show" + (bad ? " bad" : "");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = "toast", 4200);
+}
+
+async function refresh(force) {
+  // Never redraw under someone's hands: skip while they are typing or choosing a file.
+  const a = document.activeElement;
+  if (!force && a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT")) return;
+  try {
+    const r = await fetch("/api/state");
+    STATE = await r.json();
+    render();
+  } catch (e) {
+    document.getElementById("headline").textContent = "The dashboard has stopped.";
+    document.getElementById("subline").textContent = "Double-click “Open Grants Dashboard” in the grants folder to start it again.";
+  }
+}
+refresh(true);
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>
