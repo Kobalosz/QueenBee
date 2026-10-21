@@ -32,15 +32,23 @@ Say *"set us up"*. Setup is one conversation:
 Then:
 
 ```bash
-./run.sh                       # one run now, using config/settings.json
-./run.sh 1                     # at most one submission, good for a test
-./scripts/schedule.sh install  # run on schedule.frequency (weekly by default in setup)
-./scripts/schedule.sh status
-./scripts/schedule.sh uninstall
+python run.py                        # one run now, using config/settings.json
+python run.py 1                      # at most one submission, good for a test
+python scripts/schedule.py install   # run on schedule.frequency (weekly by default in setup)
+python scripts/schedule.py status
+python scripts/schedule.py uninstall
 ```
 
+Use `python3` instead of `python` on a Mac or Linux.
+
+**Runs on Windows, macOS and Linux.** On Windows the schedule is a Task Scheduler task that runs
+while the owner is signed in, because the agent works in the owner's own Chrome; the computer must be
+on at that hour. Needs [Python 3.9+](https://www.python.org/downloads/) (on Windows, tick "Add
+python.exe to PATH" in the installer), Claude Code, and Chrome with Claude in Chrome. Claude Code on
+Windows uses Git Bash, which comes with [Git for Windows](https://git-scm.com/download/win).
+
 > **macOS note:** background jobs cannot read `~/Documents`, `~/Desktop` or `~/Downloads`. Move
-> the QueenBee folder (e.g. to `~/QueenBee`) or grant Full Disk Access to `/bin/bash` before
+> the QueenBee folder (e.g. to `~/QueenBee`) or grant Full Disk Access to that Python before
 > installing the schedule.
 
 ## The Grants app (for the owner)
@@ -54,7 +62,7 @@ The owner never has to open a terminal. They open **Grants** like any other Mac 
   logins get a link to the funder's page and an "I've done this" button.
 - **Waiting for your OK** (approve mode): read the application, then "Approve for sending".
 - **Ready for you to submit:** federal and state packages, with the checklist and a button that
-  opens the files in Finder.
+  opens the files in File Explorer (Finder on a Mac).
 - **Sent:** every application that went out, the amount asked for, the full text and the
   confirmation screenshot, and "We won it" / "Not selected" buttons to record the result.
 - **Deadlines** down the side, soonest first, with the ones that need the owner marked.
@@ -76,16 +84,17 @@ offline.
 ```bash
 cd app
 npm install
-npm run demo   # the app with made-up sample data, to preview it
-npm start      # the app on this grants folder
-npm run dist   # build Grants.dmg in app/dist/ to install on the owner's Mac
-npm run check  # syntax checks and the self-test
+npm run demo       # the app with made-up sample data, to preview it
+npm start          # the app on this grants folder
+npm run dist:win   # build "Grants Setup <version>.exe" in app/dist/ for a Windows PC
+npm run dist:mac   # build Grants-<version>.dmg for a Mac
+npm run check      # syntax checks and the self-test
 ```
 
 On first launch an installed app asks for the grants folder once and remembers it. The build is not
-signed with an Apple Developer ID yet, so macOS asks for confirmation the first time: right-click
-the app, choose Open, then Open again. Signing and notarizing removes that step and needs a paid
-Apple Developer account.
+code-signed yet, so the first launch asks for confirmation. On Windows, SmartScreen shows "Windows
+protected your PC": choose More info, then Run anyway. On a Mac: right-click the app, Open, Open.
+A code-signing certificate (Windows) or an Apple Developer ID removes that step.
 
 ## What it does with each grant
 
@@ -156,7 +165,7 @@ arm opens up far more.
 
 Scheduled runs use a tool allowlist (`.claude/settings.json`), not skipped permissions: this
 project's scripts, web search, the Chrome extension, and edits to the agent's own working files.
-`run.sh` also forbids it from editing its config, scripts or permissions.
+`run.py` also forbids it from editing its config, scripts or permissions.
 
 ## Repo layout
 See [`CLAUDE.md`](CLAUDE.md#repo-layout).
