@@ -21,7 +21,8 @@ let demoRoot = null;
 
 app.setName("Grants");
 if (process.platform === "win32") app.setAppUserModelId("com.queenbee.grants");
-if (!app.requestSingleInstanceLock()) app.quit();
+// One window onto the real folder at a time; sample-data windows may run beside it.
+if (!DEMO && !app.requestSingleInstanceLock()) app.quit();
 app.on("second-instance", () => {
   if (!win) return;
   if (win.isMinimized()) win.restore();
@@ -57,7 +58,7 @@ function findRoot() {
 // ── Watching ─────────────────────────────────────────────────────────────────────
 // Only changes the window shows: application records and docs, the owner's input, the profile and
 // settings, the run summary, and the run lock appearing or disappearing.
-const RELEVANT = /^(applications[\\/]|config[\\/](owner-input|profile|settings)\.json|state[\\/](last_run\.json|status\.md)|\.run\.lock)/;
+const RELEVANT = /^(applications[\\/]|config[\\/](owner-input|profile|settings)\.json|state[\\/](last_run\.json|status\.md|email-findings\.json)|\.run\.lock)/;
 let debounce = null;
 
 function notify() {
@@ -207,6 +208,28 @@ handle("outcome", ({ slug, outcome, amount }) => {
   return { ok: true };
 });
 
+// A funder's email, as read by the grant-results agent. The owner's click is what makes it count.
+handle("email-confirm", ({ slug, findingId, amount }) => {
+  const f = store.finding(slug, findingId);
+  if (!f || !store.record(slug)) return gone;
+  if (f.kind === "AWARDED" || f.kind === "DECLINED") {
+    let value = null;
+    if (f.kind === "AWARDED" && String(amount ?? "").trim()) {
+      value = Number(String(amount).replace(/[$,\s]/g, ""));
+      if (!Number.isFinite(value) || value < 0) return { ok: false, error: "Write the amount as a number, like 5000." };
+    }
+    store.update(slug, (e) => Object.assign(e, { outcome: f.kind, outcome_amount_usd: value, outcome_at: now() }));
+  }
+  store.setFinding(slug, findingId, { confirmed_at: now() });
+  return { ok: true, kind: f.kind };
+});
+
+handle("email-dismiss", ({ slug, findingId }) => {
+  if (!store.finding(slug, findingId)) return gone;
+  store.setFinding(slug, findingId, { dismissed_at: now() });
+  return { ok: true };
+});
+
 handle("reveal", async ({ slug }) => {
   const dir = store.packageDir(slug);
   if (!dir) return { ok: false, error: "The files for this application aren't there any more." };
@@ -237,10 +260,12 @@ app.whenReady().then(() => {
   if (DEMO) console.log(`Demo folder: ${demoRoot}`);
   createWindow();
   // Development check, never in the packaged app: QB_SNAPSHOT=out.png npm run demo renders the
-  // window to a PNG after QB_SNAPSHOT_DELAY ms (default 1500) and quits.
+  // window to a PNG after QB_SNAPSHOT_DELAY ms (default 1500), scrolled down QB_SNAPSHOT_SCROLL px, and quits.
   if (!app.isPackaged && process.env.QB_SNAPSHOT) {
     win.webContents.once("did-finish-load", () =>
       setTimeout(async () => {
+        await win.webContents.executeJavaScript(`window.scrollTo(0, ${Number(process.env.QB_SNAPSHOT_SCROLL) || 0})`);
+        await new Promise((r) => setTimeout(r, 200));
         fs.writeFileSync(process.env.QB_SNAPSHOT, (await win.webContents.capturePage()).toPNG());
         app.quit();
       }, Number(process.env.QB_SNAPSHOT_DELAY) || 1500)
