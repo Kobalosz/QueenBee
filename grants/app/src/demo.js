@@ -93,6 +93,24 @@ function createDemoRoot() {
   write("config/owner-input.json", {
     "sample-foundation-growth-2026": { outcome: "AWARDED", outcome_amount_usd: 7500, outcome_at: ago(10) },
   });
+  // What the grant-results agent would have read in the owner's inbox.
+  write("state/email-findings.json", {
+    inbox_checked_at: ago(0),
+    findings: [
+      { id: "f-0a1b2c3d4e5f", slug: "sample-utility-main-street-2026", kind: "AWARDED", amount_usd: 2500, reply_by: "",
+        summary: "Sample Electric Co. says you won the $2,500 Main Street Grant.",
+        quote: "We are delighted to let you know that your business has been selected to receive a $2,500 Main Street Grant.",
+        from: "Community Programs <grants@example.com>", subject: "Your Main Street Grant application", date: ago(1) },
+      { id: "f-1b2c3d4e5f60", slug: "sample-foundation-growth-2026", kind: "NEEDS_REPLY", amount_usd: null, reply_by: day(6),
+        summary: "Sample Family Foundation needs your signed award agreement before they send the money.",
+        quote: "Please sign and return the attached award agreement so we can release your funds.",
+        from: "Sample Family Foundation <awards@example.org>", subject: "Award agreement", date: ago(3) },
+      { id: "f-2c3d4e5f6071", slug: "sample-foundation-growth-2026", kind: "UPDATE", amount_usd: null, reply_by: "",
+        summary: "Sample Family Foundation said your application reached the final round.",
+        quote: "Your application has advanced to our final review round.",
+        from: "Sample Family Foundation <awards@example.org>", subject: "Application update", date: ago(20) },
+    ],
+  });
   write("state/last_run.json", { finished_at: ago(2), submitted: 1, drafted: 2, needs_you: 3, note: "Checked 31 programs." });
   return root;
 }

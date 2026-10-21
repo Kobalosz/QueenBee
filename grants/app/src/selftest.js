@@ -57,6 +57,26 @@ try {
   assert.strictEqual(nr, "2026-10-26T09:00");
   assert.strictEqual(nextRun({ frequency: "manual" }), null);
 
+  // Funder emails: well-formed findings attach to their application; a forged one is dropped;
+  // confirming or dismissing goes to owner-input.json.
+  s = store.state();
+  const util = s.applications.find((a) => a.slug === "sample-utility-main-street-2026");
+  assert.strictEqual(util.email.length, 1);
+  assert.strictEqual(util.email[0].kind, "AWARDED");
+  assert.ok(s.inbox_checked_at, "inbox time shown");
+  const ef = path.join(root, "state", "email-findings.json");
+  const data = JSON.parse(fs.readFileSync(ef, "utf8"));
+  data.findings.push({ id: "f-<script>", slug: "sample-utility-main-street-2026", kind: "AWARDED", summary: "x" });
+  data.findings.push({ id: "f-aaaaaaaaaaaa", slug: "sample-utility-main-street-2026", kind: "PAID_IN_FULL", summary: "x" });
+  fs.writeFileSync(ef, JSON.stringify(data));
+  assert.strictEqual(store.state().applications.find((a) => a.slug === "sample-utility-main-street-2026").email.length, 1,
+    "malformed findings dropped");
+  assert.ok(store.finding("sample-utility-main-street-2026", "f-0a1b2c3d4e5f"));
+  assert.strictEqual(store.finding("sample-foundation-growth-2026", "f-0a1b2c3d4e5f"), null, "finding belongs to its own slug");
+  store.setFinding("sample-foundation-growth-2026", "f-1b2c3d4e5f60", { confirmed_at: "2026-10-21T10:00" });
+  const growthNow = store.state().applications.find((a) => a.slug === "sample-foundation-growth-2026");
+  assert.strictEqual(growthNow.email.find((f) => f.id === "f-1b2c3d4e5f60").confirmed_at, "2026-10-21T10:00");
+
   // Run detection: a live process id counts, a dead one (a crashed run) does not.
   const lock = path.join(root, ".run.lock");
   fs.writeFileSync(lock, String(process.pid));
