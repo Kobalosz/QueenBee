@@ -1,4 +1,29 @@
 {
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch",
+      "mcp__claude-in-chrome",
+      "Edit(applications/**)",
+      "Edit(logs/**)",
+      "Edit(screenshots/**)",
+      "Edit(state/**)",
+      "Edit(data/queue.md)",
+      "Edit(data/funders.md)",
+      "Edit(data/funder-notes.md)",
+      "Bash(python3 scripts/grants_gov_sweep.py:*)",
+      "Bash(python3 scripts/funder_sweep.py:*)",
+      "Bash(python3 scripts/grant_docs.py:*)",
+      "Bash(./scripts/dupe_check.sh:*)",
+      "Bash(mkdir -p applications/:*)",
+      "Bash(mkdir -p screenshots:*)",
+      "Bash(date:*)",
+      "Bash(ls:*)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
