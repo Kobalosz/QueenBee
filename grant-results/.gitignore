@@ -1,0 +1,13 @@
+# The owner's mail settings and everything read from the mailbox. Never commit.
+config/settings.json
+state/
+logs/
+.run.lock/
+*.log
+
+.DS_Store
+__pycache__/
+*.pyc
+.claude/settings.local.json
+
+!config/settings.example.json
