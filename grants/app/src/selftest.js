@@ -2,7 +2,7 @@
 const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
-const { Store, isGrantsFolder, nextRun } = require("./store");
+const { Store, isGrantsFolder, nextRun, runActive } = require("./store");
 const { createDemoRoot } = require("./demo");
 
 const root = createDemoRoot();
@@ -56,6 +56,15 @@ try {
   const nr = nextRun({ frequency: "weekly", hour: 9 }, new Date(2026, 9, 21, 12, 0));
   assert.strictEqual(nr, "2026-10-26T09:00");
   assert.strictEqual(nextRun({ frequency: "manual" }), null);
+
+  // Run detection: a live process id counts, a dead one (a crashed run) does not.
+  const lock = path.join(root, ".run.lock");
+  fs.writeFileSync(lock, String(process.pid));
+  assert.strictEqual(runActive(lock), true, "live run detected");
+  fs.writeFileSync(lock, "999999");
+  assert.strictEqual(runActive(lock), false, "stale lock ignored");
+  fs.rmSync(lock);
+  assert.strictEqual(runActive(lock), false, "no lock, no run");
 
   console.log("selftest OK");
 } finally {

@@ -56,6 +56,25 @@ function nextRun(schedule, from = new Date()) {
   return null;
 }
 
+// Whether a run is going on: run.py writes its process id into .run.lock and holds an OS lock on it.
+// A file left behind by a crashed run names a process that is gone, so it does not count.
+function runActive(lockPath) {
+  let text;
+  try {
+    text = fs.readFileSync(lockPath, "utf8");
+  } catch (e) {
+    return e.code === "EISDIR"; // the old bash launcher used a directory
+  }
+  const pid = parseInt(text, 10);
+  if (!pid) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return e.code === "EPERM"; // alive, owned by someone else
+  }
+}
+
 // A folder is a grants folder when it holds the agent's playbook and scripts.
 function isGrantsFolder(root) {
   return !!root && fs.existsSync(path.join(root, "CLAUDE.md")) && fs.existsSync(path.join(root, "scripts", "grant_docs.py"));
@@ -119,7 +138,7 @@ class Store {
       frequency: schedule.frequency || "manual",
       next_run: nextRun(schedule),
       last_run: last,
-      running: fs.existsSync(path.join(this.root, ".run.lock")),
+      running: runActive(path.join(this.root, ".run.lock")),
       applications: apps,
       today: localDate(),
     };
@@ -194,4 +213,4 @@ class Store {
   }
 }
 
-module.exports = { Store, isGrantsFolder, nextRun, now, localDate, writeJSONAtomic, SLUG_RE, NEED_RE, MAX_ANSWER, OWNER_FIELDS };
+module.exports = { Store, isGrantsFolder, runActive, nextRun, now, localDate, writeJSONAtomic, SLUG_RE, NEED_RE, MAX_ANSWER, OWNER_FIELDS };
