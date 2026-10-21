@@ -1,0 +1,101 @@
+{
+  "_readme": "Every value the agent types into a grant form, used VERBATIM. Anything missing becomes NEEDS HUMAN, never a guess. Setup fills this from the client's documents and answers. Delete keys that do not apply; add your own freely, the agent reads them all.",
+
+  "owner": {
+    "first_name": "Firstname",
+    "last_name": "Lastname",
+    "legal_name": "Firstname Lastname",
+    "title": "Owner",
+    "email": "owner@example.com",
+    "phone": "5551234567",
+    "ownership_percent": "",
+    "years_experience_in_industry": "",
+    "_owner_note": "The person who signs and is contacted. Never store the owner's SSN, date of birth or bank details here: forms that ask for them are NEEDS HUMAN."
+  },
+
+  "ownership_demographics": {
+    "woman_owned_51pct": "",
+    "minority_owned_51pct": "",
+    "veteran_owned": "",
+    "disability_owned": "",
+    "lgbtq_owned": "",
+    "race_ethnicity": "Decline to self-identify",
+    "gender": "Decline to self-identify",
+    "_demographics_note": "Many grants are restricted to woman-, minority- or veteran-owned businesses. Fill these ONLY with what the client states. Never infer them from a name, a photo or a website. Empty means the agent will not apply to a program that requires it."
+  },
+
+  "business": {
+    "enabled": true,
+    "legal_name": "Example Business LLC",
+    "dba": "",
+    "entity_type": "LLC",
+    "state_of_formation": "",
+    "year_founded": "",
+    "ein": "",
+    "uei": "",
+    "sam_registration": "",
+    "_sam_note": "UEI and active SAM.gov registration are required for any federal grant. SAM registration can take weeks, so the agent flags a strong federal fit that is blocked by this early rather than at the deadline. Values: 'active until YYYY-MM-DD', 'in progress', 'none'.",
+    "naics_codes": [],
+    "industry_description": "",
+    "full_time_employees": "",
+    "part_time_employees": "",
+    "annual_revenue_last_fiscal_year": "",
+    "fiscal_year_end": "",
+    "_numbers_note": "Revenue and headcount are copied exactly as the client states them, with the year they belong to. Never rounded up, never projected.",
+    "business_address_street": "",
+    "business_address_city": "",
+    "business_address_county": "",
+    "business_address_state": "",
+    "business_address_zip": "",
+    "business_address_full": "",
+    "home_based": "",
+    "rural": "",
+    "_location_note": "County and rural status decide eligibility for many state, local and USDA programs. Fill from the client, not from a map lookup the client has not confirmed.",
+    "website": "",
+    "social_links": [],
+    "certifications": [],
+    "_certifications_note": "Only certifications the client actually holds, each with issuer and number, e.g. 'WOSB, SBA, certified 2025-03-01'. A program that requires a certification not listed here is a SKIP."
+  },
+
+  "nonprofit": {
+    "enabled": false,
+    "legal_name": "",
+    "ein": "",
+    "irs_status": "",
+    "_irs_status_note": "'501(c)(3) public charity', '501(c)(3) private foundation', 'other 501(c)', 'fiscally sponsored', or 'none'. A program that requires 501(c)(3) status is a SKIP unless this says so, or says 'fiscally sponsored' and the program accepts fiscal sponsors.",
+    "fiscal_sponsor_name": "",
+    "fiscal_sponsor_ein": "",
+    "year_incorporated": "",
+    "uei": "",
+    "sam_registration": "",
+    "annual_operating_budget": "",
+    "board_members_count": "",
+    "volunteers_count": "",
+    "people_served_last_year": "",
+    "address_full": "",
+    "website": ""
+  },
+
+  "documents": {
+    "w9": "",
+    "business_plan": "",
+    "financial_statements": "",
+    "tax_returns_most_recent": "",
+    "irs_determination_letter": "",
+    "board_list": "",
+    "budget_spreadsheet": "",
+    "logo": "",
+    "photos": [],
+    "owner_headshot": "",
+    "pitch_video_url": "",
+    "_documents_note": "Paths relative to this folder (e.g. data/docs/w9.pdf). Every file here is something the client gave you. A form that requires a document listed as empty is NEEDS HUMAN."
+  },
+
+  "presets": {
+    "how_did_you_hear": "Online search",
+    "amount_requested_default": "",
+    "_amount_note": "Empty means: request the smallest of (a) the program's maximum, (b) the total of the matching budget preset in answers.md. Never an amount with no budget behind it.",
+    "previously_received_this_grant": "No",
+    "currently_receiving_federal_funds": ""
+  }
+}
