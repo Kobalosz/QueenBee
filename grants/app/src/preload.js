@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld("grants", {
   submitted: call("submitted"),
   outcome: call("outcome"),
   reveal: call("reveal"),
+  emailConfirm: call("email-confirm"),
+  emailDismiss: call("email-dismiss"),
   chooseFolder: call("choose-folder"),
   onChange: (callback) => ipcRenderer.on("changed", () => callback()),
 });

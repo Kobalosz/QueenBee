@@ -2,10 +2,12 @@
 // be tested with plain node (src/selftest.js).
 //
 // Reads:  applications/<slug>.json  one record per application (schema in config/spec.md)
+//         state/email-findings.json  what the grant-results agent read in funders' emails
 //         applications/<slug>.md    the full application text
 //         applications/files/<slug>/ package files such as CHECKLIST.md
 //         state/last_run.json        the agent's end-of-run summary
-// Writes: config/owner-input.json    answers, approvals, "done" marks and results, and nothing else
+// Writes: config/owner-input.json    answers, approvals, "done" marks, results, and confirmed or
+//                                    dismissed email findings, and nothing else
 //         data/docs/                 files the owner uploads
 // The agent reads owner-input.json and never edits it, so neither side can overwrite the other.
 const fs = require("fs");
@@ -18,6 +20,8 @@ const UPLOAD_RE = /\.(pdf|docx?|xlsx?|csv|png|jpe?g|txt)$/i;
 const OWNER_FIELDS = ["approved_at", "submitted_by_owner_at", "outcome", "outcome_amount_usd", "outcome_at"];
 const MAX_ANSWER = 5000;
 const MAX_UPLOAD = 50 * 1024 * 1024;
+const FINDING_ID_RE = /^f-[0-9a-f]{12}$/;
+const FINDING_KINDS = ["AWARDED", "DECLINED", "NEEDS_REPLY", "UPDATE"];
 
 const pad = (n) => String(n).padStart(2, "0");
 function localDate(d = new Date()) {
@@ -94,6 +98,7 @@ class Store {
     const settings = readJSON(path.join(this.root, "config", "settings.json"), {});
     const profile = readJSON(path.join(this.root, "config", "profile.json"), {});
     const owner = this.ownerInput();
+    const mail = this.emailFindings();
     const appsDir = path.join(this.root, "applications");
     const apps = [];
     let names = [];
@@ -120,6 +125,11 @@ class Store {
         rec.package_files = [];
       }
       rec.has_screenshot = !!this.screenshotPath(rec);
+      // What funders' emails said about this application, with what the owner did about each.
+      rec.email = mail.findings
+        .filter((f) => f.slug === rec.slug)
+        .map((f) => Object.assign({}, f, ((mine.email || {})[f.id]) || {}))
+        .sort((x, y) => String(y.date).localeCompare(String(x.date)));
       apps.push(rec);
     }
     const biz = profile.business || {};
@@ -139,9 +149,36 @@ class Store {
       next_run: nextRun(schedule),
       last_run: last,
       running: runActive(path.join(this.root, ".run.lock")),
+      inbox_checked_at: mail.checked_at,
       applications: apps,
       today: localDate(),
     };
+  }
+
+  // Findings from the grant-results agent, kept only when well-formed: they are shown as text.
+  emailFindings() {
+    const data = readJSON(path.join(this.root, "state", "email-findings.json"), {});
+    const findings = (Array.isArray(data.findings) ? data.findings : []).filter(
+      (f) => f && FINDING_ID_RE.test(String(f.id)) && SLUG_RE.test(String(f.slug)) && FINDING_KINDS.includes(f.kind)
+    ).map((f) => ({
+      id: f.id, slug: f.slug, kind: f.kind,
+      amount_usd: typeof f.amount_usd === "number" && f.amount_usd > 0 ? f.amount_usd : null,
+      reply_by: /^\d{4}-\d{2}-\d{2}$/.test(String(f.reply_by || "")) ? f.reply_by : "",
+      summary: String(f.summary || "").slice(0, 300), quote: String(f.quote || "").slice(0, 400),
+      from: String(f.from || "").slice(0, 200), subject: String(f.subject || "").slice(0, 300), date: String(f.date || ""),
+    }));
+    return { findings, checked_at: typeof data.inbox_checked_at === "string" ? data.inbox_checked_at : "" };
+  }
+
+  finding(slug, findingId) {
+    return this.emailFindings().findings.find((f) => f.slug === slug && f.id === findingId) || null;
+  }
+
+  setFinding(slug, findingId, fields) {
+    this.update(slug, (e) => {
+      e.email = e.email || {};
+      e.email[findingId] = Object.assign(e.email[findingId] || {}, fields);
+    });
   }
 
   record(slug) {
