@@ -293,6 +293,8 @@ function render() {
   if (!s.configured) {
     h1.textContent = "The grant agent isn't set up yet."; h1.className = "";
     sub.textContent = "Open the grants folder in Claude Code and say “set us up”. This page fills in after the first run.";
+    document.getElementById("main").innerHTML = document.getElementById("aside").innerHTML = "";
+    return;
   } else if (total === 0) {
     h1.textContent = "Nothing needs you right now."; h1.className = "calm";
     sub.textContent = apps.length ? `The agent keeps looking for grants${s.next_run ? " and checks again " + shortDate(s.next_run, true) : ""}.` : "The agent hasn't found or written anything yet. Results appear here after its first run.";
