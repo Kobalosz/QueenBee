@@ -1,0 +1,3 @@
+# Stores the mailbox app password in Windows Credential Manager, the macOS Keychain, or the Linux
+# Secret Service. Install with: python -m pip install -r requirements.txt
+keyring==25.7.0
