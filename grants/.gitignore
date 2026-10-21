@@ -7,6 +7,7 @@
 config/profile.json
 config/answers.md
 config/settings.json
+config/owner-input.json
 
 # The client's documents (W-9, financials, business plan, IRS letter, photos)
 data/docs/
