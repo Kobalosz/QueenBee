@@ -27,5 +27,6 @@ contextBridge.exposeInMainWorld("grants", {
   mailPassword: call("mail-password"),
   mailCheck: call("mail-check"),
   runNow: call("run-now"),
+  installUpdate: call("install-update"),
   onChange: (callback) => ipcRenderer.on("changed", () => callback()),
 });

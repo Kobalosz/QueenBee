@@ -20,6 +20,7 @@ const UPLOAD_TYPES = ["pdf", "doc", "docx", "xls", "xlsx", "csv", "png", "jpg", 
 
 let win = null;
 let store = null;
+let updateReady = ""; // the version downloaded and waiting to install
 let watcher = null;
 let demoRoot = null;
 
@@ -134,7 +135,7 @@ function fromOurWindow(event) {
 function handle(channel, fn) {
   ipcMain.handle(channel, async (event, arg) => {
     if (!fromOurWindow(event)) return { ok: false, error: "Not allowed." };
-    if (!store && channel !== "state" && channel !== "choose-folder") {
+    if (!store && !["state", "choose-folder", "install-update"].includes(channel)) {
       return { ok: false, error: "Choose the grants folder first." };
     }
     try {
@@ -155,10 +156,10 @@ function setupStatus(root) {
   return { started: !!saved, completed: !!(saved && saved.completed_at) };
 }
 
-handle("state", () => ({
-  ok: true,
-  state: store ? { ...store.state(), demo: DEMO, setup: setupStatus(store.root) } : { needs_folder: true, demo: DEMO },
-}));
+handle("state", () => {
+  const app_ = { demo: DEMO, version: app.getVersion(), update_ready: updateReady };
+  return { ok: true, state: store ? { ...store.state(), ...app_, setup: setupStatus(store.root) } : { needs_folder: true, ...app_ } };
+});
 
 handle("doc", ({ slug, file }) => {
   const text = store.doc(slug, file || null);
@@ -414,12 +415,41 @@ handle("run-now", async () => {
   return System.startRun(store.root);
 });
 
+// ── Updates ──────────────────────────────────────────────────────────────────────
+// The installed Windows app checks this project's GitHub Releases for a newer version, downloads it
+// in the background, and installs it when the owner next closes Grants. The window offers to
+// restart now. Only the app updates this way; the agents' folders are separate. Not on a Mac,
+// where updating needs a signed app, and never from the source tree or the sample version.
+function startUpdates() {
+  if (!app.isPackaged || DEMO || process.platform !== "win32") return;
+  const { autoUpdater } = require("electron-updater");
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.on("update-downloaded", (info) => {
+    updateReady = info.version;
+    notify();
+  });
+  autoUpdater.on("error", () => {}); // offline, or GitHub unreachable: the next check tries again
+  const check = () => autoUpdater.checkForUpdates().catch(() => {});
+  check();
+  setInterval(check, 6 * 60 * 60 * 1000);
+}
+
+handle("install-update", () => {
+  if (!updateReady) return { ok: false, error: "There's no update waiting." };
+  // Silent install, then start the new version. An agent run in progress is a separate process
+  // and carries on.
+  setImmediate(() => require("electron-updater").autoUpdater.quitAndInstall(true, true));
+  return { ok: true };
+});
+
 // ── Lifecycle ────────────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   if (!app.isPackaged && process.env.QB_THEME) nativeTheme.themeSource = process.env.QB_THEME; // light or dark, for snapshots
   useRoot(findRoot());
   if (DEMO) console.log(`Demo folder: ${demoRoot}`);
   createWindow();
+  startUpdates();
   // Development check, never in the packaged app: QB_SNAPSHOT=out.png npm run demo renders the
   // window to a PNG after QB_SNAPSHOT_DELAY ms (default 1500), scrolled down QB_SNAPSHOT_SCROLL px, and quits.
   // QB_SNAPSHOT_SIZE=WxH sets the window size first.
