@@ -19,7 +19,9 @@ cd QueenBee/grants
 claude
 ```
 
-Say *"set us up"*. Setup is one conversation:
+**Two ways to set up.** The owner can do it alone in the [Grants app](#the-grants-app-for-the-owner)
+(Setup walks through every answer the agent needs, then turns the schedule on), or someone can do
+it with them in Claude Code. For the chat route, say *"set us up"*. Setup is one conversation:
 
 1. It asks for the documents and reads them.
 2. It shows every value it pulled out so the owner can correct it.
@@ -53,8 +55,32 @@ Windows uses Git Bash, which comes with [Git for Windows](https://git-scm.com/do
 
 ## The Grants app (for the owner)
 
-The owner never has to open a terminal. They open **Grants** like any other Mac app:
+The owner never has to open a terminal. They open **Grants** like any other app (from the Start
+menu on Windows):
 
+- **Setup, the first time it opens.** Thirteen short steps the owner fills in at their own pace,
+  saved as they type:
+  1. The business and its owner.
+  2. Location and size.
+  3. Ownership, each question asked on its own, with "Prefer not to say".
+  4. A nonprofit, if there is one.
+  5. The owner's story.
+  6. The projects a grant could pay for, with line-item prices.
+  7. The questions of fact that forms ask.
+  8. Documents to upload.
+  9. Which grants to go after.
+  10. Auto or approve mode.
+  11. The funder-email helper, including its app password.
+  12. The schedule.
+  13. A check that this computer has Python, Claude Code and Git.
+
+  "Turn on the agent" then writes `config/profile.json`, `config/answers.md` and
+  `config/settings.json` from those answers, word for word, and installs the schedules. The answers
+  themselves are kept in `config/setup.json` (gitignored). A folder first set up in a chat is
+  imported, and any section of `answers.md` the app has no field for is kept. The app's first
+  rewrite of a hand-written `answers.md` leaves a copy in `config/backup/`.
+- **Settings** reopens those steps to change anything. **Check for grants now** starts a run on the
+  spot, exactly as the schedule would.
 - **The top line answers "do I need to do anything?"** in a sentence: "Two things need you." or
   "Nothing needs you right now."
 - **Help the agent finish:** every question the agent could not answer from the files, in plain
@@ -89,13 +115,15 @@ offline.
 cd app
 npm install
 npm run demo       # the app with made-up sample data, to preview it
+npm run demo:setup # setup from a blank sample folder, to walk through it
 npm start          # the app on this grants folder
 npm run dist:win   # build "Grants Setup <version>.exe" in app/dist/ for a Windows PC
 npm run dist:mac   # build Grants-<version>.dmg for a Mac
 npm run check      # syntax checks and the self-test
 ```
 
-On first launch an installed app asks for the grants folder once and remembers it. The build is not
+On first launch an installed app asks for the grants folder once and remembers it, then opens
+setup if the folder has never been set up. The build is not
 code-signed yet, so the first launch asks for confirmation. On Windows, SmartScreen shows "Windows
 protected your PC": choose More info, then Run anyway. On a Mac: right-click the app, Open, Open.
 A code-signing certificate (Windows) or an Apple Developer ID removes that step.
