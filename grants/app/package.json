@@ -8,13 +8,11 @@
   "scripts": {
     "start": "electron .",
     "demo": "electron . --demo",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/store.js && node --check src/demo.js && node --check src/renderer/app.js && node src/selftest.js",
+    "demo:setup": "electron . --demo --setup",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/store.js && node --check src/setup.js && node --check src/system.js && node --check src/demo.js && node --check src/renderer/app.js && node --check src/renderer/setup.js && node src/selftest.js",
     "dist": "electron-builder --win --mac",
     "dist:win": "electron-builder --win",
     "dist:mac": "electron-builder --mac"
-  },
-  "dependencies": {
-    "@fontsource/public-sans": "5.3.0"
   },
   "devDependencies": {
     "electron": "44.6.0",
@@ -26,7 +24,7 @@
     "files": [
       "src/**/*",
       "package.json",
-      "node_modules/@fontsource/public-sans/**/*"
+      "node_modules/@fontsource-variable/atkinson-hyperlegible-next/**/*"
     ],
     "directories": {
       "output": "dist"
@@ -55,5 +53,8 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Grants"
     }
+  },
+  "dependencies": {
+    "@fontsource-variable/atkinson-hyperlegible-next": "5.3.0"
   }
 }
