@@ -219,7 +219,7 @@ const STEP = {
 
   ownership: () => ({
     title: "Who owns the business",
-    lede: "Many grants are only for businesses owned by women, people of color, veterans or people with disabilities. Answer only what's true and what you're comfortable sharing. \"Prefer not to say\" means the agent skips grants that require it. It never guesses.",
+    lede: "Many grants are only for businesses owned by women, people of color, veterans or people with disabilities. Answer only what's true and what you're comfortable sharing. “Prefer not to say” means the agent skips grants that require it. It never guesses.",
     body: group("", "",
       yesno("demographics.woman_owned", "Is the business at least 51% owned by one or more women?") +
       yesno("demographics.minority_owned", "Is it at least 51% owned by one or more people from a racial or ethnic minority group?") +
@@ -340,13 +340,13 @@ const STEP = {
         ], { cards: true })) +
       group("Signatures, boxes and fees", "",
         yesno("sending.typed_signature", "May the agent type your name where a form asks for a signature?", { skip: false, hint: "If not, it fills everything else and leaves the form for you to sign." }) +
-        yesno("sending.checkbox_cert", "May it tick boxes like \"I certify this information is accurate\"?", { skip: false, hint: "Everything it fills in comes from what you entered here." }) +
+        yesno("sending.checkbox_cert", "May it tick boxes like “I certify this information is accurate”?", { skip: false, hint: "Everything it fills in comes from what you entered here." }) +
         text("sending.max_fee", "Apply to grants with a fee of up to", { w: 3, inputmode: "numeric", placeholder: "0", hint: "In dollars. Most real grants are free. The agent never pays: a fee always comes to you." })),
   }),
 
   email: () => ({
     title: "Funder emails",
-    lede: "A second helper can read the emails funders send about applications you've sent, so news like \"you won\" or \"we need a document\" shows up here. This step is optional.",
+    lede: "A second helper can read the emails funders send about applications you've sent, so news like “you won” or “we need a document” shows up here. This step is optional.",
     body: !SU.results
       ? note("<p>The email helper isn't in this QueenBee folder, so you can skip this step.</p>", "warn")
       : note("<p>Once an application has been sent, it checks your inbox only for emails from that funder, or emails that name that grant, sent after the application went out. It opens your inbox read-only, so nothing is marked as read or moved, and keeps a short copy of each matching email on this computer for 60 days.</p><p>It never reads other email, never replies, and never sends anything anywhere. You confirm every result yourself.</p>") +
@@ -461,7 +461,7 @@ function docRow([key, name, why, nonprofitOnly]) {
 
 // ── Finish ──────────────────────────────────────────────────────────────────────
 const CHECK_HELP = {
-  python: ['Install Python from <a href="https://www.python.org/downloads/" target="_blank" rel="noopener noreferrer">python.org</a>. On the first installer screen, tick "Add python.exe to PATH".', "Python"],
+  python: ['Install Python from <a href="https://www.python.org/downloads/" target="_blank" rel="noopener noreferrer">python.org</a>. On the first installer screen, tick “Add python.exe to PATH”.', "Python"],
   claude: ['Install <a href="https://claude.com/claude-code" target="_blank" rel="noopener noreferrer">Claude Code</a>, then open it once and sign in.', "Claude Code"],
   git: ['Install <a href="https://git-scm.com/downloads/win" target="_blank" rel="noopener noreferrer">Git for Windows</a>. The default choices are fine.', "Git for Windows"],
 };
@@ -818,6 +818,10 @@ async function onClick(e) {
   }
 }
 
+// Leaving a field saves at once, so closing the window right after typing loses nothing.
+document.addEventListener("focusout", (e) => {
+  if (SU.active && e.target.dataset && e.target.dataset.path) saveNow(false);
+});
 document.addEventListener("input", onEdit);
 document.addEventListener("change", onEdit);
 document.addEventListener("click", onClick);
