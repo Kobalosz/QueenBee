@@ -416,14 +416,20 @@ handle("run-now", async () => {
 
 // ── Lifecycle ────────────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
+  if (!app.isPackaged && process.env.QB_THEME) nativeTheme.themeSource = process.env.QB_THEME; // light or dark, for snapshots
   useRoot(findRoot());
   if (DEMO) console.log(`Demo folder: ${demoRoot}`);
   createWindow();
   // Development check, never in the packaged app: QB_SNAPSHOT=out.png npm run demo renders the
   // window to a PNG after QB_SNAPSHOT_DELAY ms (default 1500), scrolled down QB_SNAPSHOT_SCROLL px, and quits.
+  // QB_SNAPSHOT_SIZE=WxH sets the window size first.
   if (!app.isPackaged && process.env.QB_SNAPSHOT) {
+    const size = /^(\d+)x(\d+)$/.exec(process.env.QB_SNAPSHOT_SIZE || "");
+    if (size) win.setSize(Number(size[1]), Number(size[2]));
     win.webContents.once("did-finish-load", () =>
       setTimeout(async () => {
+        // QB_SNAPSHOT_JS: a script to run first, such as clicks through setup (awaited if it returns a promise).
+        if (process.env.QB_SNAPSHOT_JS) await win.webContents.executeJavaScript(process.env.QB_SNAPSHOT_JS);
         await win.webContents.executeJavaScript(`window.scrollTo(0, ${Number(process.env.QB_SNAPSHOT_SCROLL) || 0})`);
         await new Promise((r) => setTimeout(r, 200));
         fs.writeFileSync(process.env.QB_SNAPSHOT, (await win.webContents.capturePage()).toPNG());
