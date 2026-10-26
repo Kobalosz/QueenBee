@@ -1,5 +1,5 @@
 // The window. All data comes through window.grants (src/preload.js); every button is wired by one
-// click listener reading data-act, so the page needs no inline script.
+// click listener reading data-act, so the page needs no inline script. Setup lives in setup.js.
 const api = window.grants;
 const NUM = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
 const usd = (n) =>
@@ -105,6 +105,24 @@ function classify(a) {
 }
 const NEEDS_YOU = ["todo", "approve", "submit"];
 
+// Setup comes first on a folder that was never set up, or whose setup was left half done.
+const needsSetup = (s) => !s.configured || (s.setup && s.setup.started && !s.setup.completed);
+
+function header(s) {
+  $("biz").textContent = s.business || "";
+  document.title = s.business ? `Grants for ${s.business}` : "Grants";
+  $("running").hidden = !s.running;
+  const buttons = [];
+  if (SU.active) {
+    $("clock").innerHTML = "";
+    if (SU.draft && SU.draft.completed_at) buttons.push(`<button class="quiet" data-act="close-setup">Back to your grants</button>`);
+  } else if (!s.needs_folder) {
+    buttons.push(`<button class="quiet" data-act="run-now"${s.running ? " disabled" : ""}>Check for grants now</button>`);
+    buttons.push(`<button class="quiet" data-act="open-settings">Settings</button>`);
+  }
+  $("top-actions").innerHTML = buttons.join("");
+}
+
 function render() {
   const s = STATE;
   $("demo").hidden = !s.demo;
@@ -112,24 +130,29 @@ function render() {
   const sub = $("subline");
   const heroActions = $("hero-actions");
   heroActions.hidden = true;
+  $("tally").hidden = true;
 
   if (s.needs_folder) {
+    header(s);
     $("biz").textContent = "";
     $("clock").innerHTML = "";
     $("running").hidden = true;
-    h1.textContent = "Choose your grants folder.";
+    h1.textContent = "First, find your grants folder.";
     h1.className = "";
-    sub.textContent = "This app shows what the grant agent has done. It needs to know where the agent keeps its files: the folder named grants inside QueenBee.";
+    sub.textContent = "This app works with the grant agent's files: the folder named grants inside QueenBee. Choose it once and the app remembers.";
     heroActions.innerHTML = `<button data-act="choose-folder">Choose folder</button>`;
     heroActions.hidden = false;
     $("main").innerHTML = $("aside").innerHTML = "";
     return;
   }
+  if (!SU.active && needsSetup(s)) {
+    openSetup(false);
+    return;
+  }
+  header(s);
+  if (SU.active) return;
 
   const apps = s.applications;
-  $("biz").textContent = s.business || "";
-  document.title = s.business ? `Grants for ${s.business}` : "Grants";
-  $("running").hidden = !s.running;
   const clock = [];
   if (s.last_run && s.last_run.finished_at) {
     const t = new Date(s.last_run.finished_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
@@ -138,14 +161,6 @@ function render() {
   clock.push(s.next_run ? `Next check ${shortDate(s.next_run, true)}` : "Checks only when started by hand");
   if (s.inbox_checked_at) clock.push(`Inbox read ${shortDate(s.inbox_checked_at)}`);
   $("clock").innerHTML = clock.map((c) => `<span>${esc(c)}</span>`).join("");
-
-  if (!s.configured) {
-    h1.textContent = "The grant agent isn't set up yet.";
-    h1.className = "";
-    sub.textContent = "Open the grants folder in Claude Code and say “set us up”. This window fills in after the first run.";
-    $("main").innerHTML = $("aside").innerHTML = "";
-    return;
-  }
 
   const by = { todo: [], approve: [], submit: [], sent: [], working: [], later: [], passed: [] };
   apps.forEach((a) => by[classify(a)].push(a));
@@ -162,7 +177,13 @@ function render() {
     h1.className = "calm";
     sub.textContent = apps.length
       ? `The agent keeps looking for grants${s.next_run ? " and checks again " + shortDate(s.next_run, true) : ""}.`
-      : "The agent hasn't found or written anything yet. Results appear here after its first run.";
+      : s.running
+        ? "The agent is on its first look for grants. What it finds shows up here as it goes."
+        : `The agent hasn't looked for grants yet.${s.next_run ? " Its first check is " + shortDate(s.next_run, true) + ", or start one now." : " Start its first check now."}`;
+    if (!apps.length && !s.running) {
+      heroActions.innerHTML = `<button data-act="run-now">Check for grants now</button>`;
+      heroActions.hidden = false;
+    }
   } else {
     h1.textContent = `${NUM[total] || total} ${total === 1 ? "thing needs" : "things need"} you.`;
     h1.className = "";
@@ -172,6 +193,14 @@ function render() {
     if (by.approve.length) parts.push(`${by.approve.length === 1 ? "an application" : words(by.approve.length) + " applications"} waiting for your OK`);
     if (by.submit.length) parts.push(`${by.submit.length === 1 ? "a package" : words(by.submit.length) + " packages"} ready for you to submit`);
     sub.textContent = cap(listJoin(parts)) + ".";
+  }
+
+  // A plain record of what has happened so far.
+  const won = by.sent.filter((a) => a.outcome === "AWARDED");
+  if (by.sent.length) {
+    const wonSum = won.reduce((n, a) => n + (Number(a.outcome_amount_usd) || 0), 0);
+    $("tally").textContent = `So far: ${by.sent.length} sent${won.length ? `, ${won.length} won${wonSum ? " for " + usd(wonSum) : ""}` : ""}.`;
+    $("tally").hidden = false;
   }
 
   let html = "";
@@ -473,6 +502,24 @@ document.addEventListener("click", async (e) => {
     case "choose-folder":
       act(api.chooseFolder, {}, b, "Folder chosen.");
       break;
+    case "open-settings":
+      openSetup(true);
+      break;
+    case "close-setup":
+      closeSetup();
+      break;
+    case "run-now": {
+      b.disabled = true;
+      const r = await api.runNow();
+      if (r.ok) {
+        toast("The agent is starting. This window updates as it works.");
+        if (SU.active) closeSetup();
+      } else {
+        toast(r.error || "The agent couldn't start.", true);
+        b.disabled = false;
+      }
+      break;
+    }
   }
 });
 
@@ -500,7 +547,9 @@ async function refresh(force) {
     return;
   }
   STATE = r.state;
-  render();
+  // Setup is drawn by setup.js; a refresh only updates the header, never the owner's half-typed answers.
+  if (SU.active) header(STATE);
+  else render();
 }
 document.addEventListener("focusout", () => setTimeout(() => pending && refresh(), 0));
 
