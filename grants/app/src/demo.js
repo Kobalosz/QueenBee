@@ -3,15 +3,25 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { localDate, now } = require("./store");
+const { defaults, STEPS } = require("./setup");
 
-function createDemoRoot() {
+// blank: a folder that has never been set up, to walk through setup with nothing real at stake.
+function createDemoRoot({ blank = false } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "queenbee-demo-"));
-  for (const d of ["applications/files", "config", "state", "screenshots", "scripts"]) {
+  for (const d of ["applications/files", "config", "data", "state", "screenshots", "scripts"]) {
     fs.mkdirSync(path.join(root, d), { recursive: true });
   }
   // The two markers that make a folder a grants folder.
   fs.writeFileSync(path.join(root, "CLAUDE.md"), "Demo folder.\n");
   fs.writeFileSync(path.join(root, "scripts", "grant_docs.py"), "# demo\n");
+  // The real templates, when the app runs from the source tree, so setup writes realistic files.
+  const templates = path.resolve(__dirname, "..", "..", "config");
+  for (const name of ["profile.example.json", "settings.example.json", "answers.example.md"]) {
+    try {
+      fs.copyFileSync(path.join(templates, name), path.join(root, "config", name));
+    } catch {}
+  }
+  if (blank) return root;
 
   const day = (n) => localDate(new Date(Date.now() + n * 86400000));
   const ago = (n) => now(new Date(Date.now() - n * 86400000));
@@ -20,6 +30,7 @@ function createDemoRoot() {
 
   write("config/profile.json", { business: { legal_name: "Sample Business LLC" } });
   write("config/settings.json", { submission: { mode: "auto" }, schedule: { frequency: "weekly", hour: 9 } });
+  write("config/setup.json", sampleSetup());
 
   const records = [
     {
@@ -113,6 +124,32 @@ function createDemoRoot() {
   });
   write("state/last_run.json", { finished_at: ago(2), submitted: 1, drafted: 2, needs_you: 3, note: "Checked 31 programs." });
   return root;
+}
+
+// What Settings shows in the sample version: a setup someone finished, all made up.
+function sampleSetup() {
+  const d = defaults();
+  Object.assign(d.owner, { first_name: "Sam", last_name: "Sample", title: "Owner", email: "owner@example.com", phone: "555 010 0100" });
+  Object.assign(d.business, {
+    legal_name: "Sample Business LLC", entity_type: "LLC", state_of_formation: "Ohio", year_founded: "2019",
+    industry_description: "A sample shop that makes made-up things for made-up customers.", street: "100 Sample St",
+    city: "Sampletown", county: "Sample County", state: "OH", zip: "45400", home_based: "no", rural: "no",
+    full_time: "3", part_time: "1", revenue: "150,000", revenue_year: "2025", ein: "00-0000000", sam_registration: "none",
+  });
+  Object.assign(d.story, {
+    one_line: "Sample Business makes sample goods for sample customers in Sampletown.",
+    owner_story: "This is sample text. In a real setup, the owner's own story goes here.",
+  });
+  d.money.need = "Sample text: why the business needs outside money now.";
+  d.money.projects = [{
+    name: "New equipment", buys: "A sample machine", cost_source: "a sample quote", outcome: "Sample text about what changes.",
+    items: [{ item: "Sample machine", amount: "9,000" }, { item: "Delivery and setup", amount: "1,000" }],
+  }];
+  Object.assign(d.targets, { keywords: "small business, equipment", fit_note: "Sample text: grants for equipment and training." });
+  Object.assign(d.mail, { enabled: "yes", address: "owner@example.com", provider: "gmail", password_saved_at: now(), check: "ok" });
+  d.done = STEPS.slice();
+  d.completed_at = now();
+  return d;
 }
 
 module.exports = { createDemoRoot };
