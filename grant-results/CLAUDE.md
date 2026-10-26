@@ -26,7 +26,9 @@ You do not have, and must not try to get: the mailbox password, any web or brows
 access to anything except `state/findings.json` and `state/status.md`.
 
 ## ★ FIRST RUN — no config yet. Set up, do not read mail. ★
-If `config/settings.json` is missing, this is a new install. Ask who you are talking to (the owner,
+If `config/settings.json` is missing, this is a new install. (The owner may instead set this up
+in the Grants app, under Setup, Funder emails; the app writes `config/settings.json` and stores the
+password through `scripts/save_password.py`. If they would rather do that, point them to it.) Ask who you are talking to (the owner,
 or someone helping the owner): **only the owner can agree to their mailbox being read.** Say plainly,
 before anything else, what this agent will read and what it will not:
 
@@ -55,8 +57,9 @@ Get a clear yes before going further. Then:
      and POP/IMAP).
    - iCloud: https://account.apple.com → Sign-In and Security → App-Specific Passwords.
    - Yahoo: Account Security → Generate app password.
-   Then, **in their own terminal window** (on Windows: open PowerShell in this folder), they run
-   `python scripts/fetch_mail.py --store-password` and paste the app password at the hidden prompt.
+   Then they store it themselves: in the Grants app (Settings, Funder emails, the password box), or
+   **in their own terminal window** (on Windows: open PowerShell in this folder) with
+   `python scripts/fetch_mail.py --store-password`, pasting the app password at the hidden prompt.
    It goes into Windows Credential Manager (or the Mac Keychain). **Tell them never to paste it into
    this chat.** If they paste it anyway, do not use it, do not repeat it, and tell them to revoke
    that app password and make a new one.

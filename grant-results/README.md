@@ -39,8 +39,14 @@ Windows, macOS and Linux.
 
 ## Setup
 
-Open this folder in Claude Code and say *"set us up"*. It explains what will be read, asks for the
-owner's agreement, and walks through the app password.
+**In the Grants app** (the easy way): the Funder emails step of Setup explains what will be read,
+asks for the owner's agreement, and takes the mailbox and its app password. The app passes the
+password straight to `scripts/save_password.py`, which puts it in the password store; the app keeps
+no copy. It then signs in once to check, and installs the schedule when the owner turns the agent on.
+The app installs `keyring` itself if it is missing.
+
+**In Claude Code:** open this folder and say *"set us up"*. It explains the same things, asks for
+the owner's agreement, and walks through the app password.
 
 ```bash
 python -m pip install -r requirements.txt
@@ -68,6 +74,7 @@ grant-results/
 ├── scripts/
 │   ├── fetch_mail.py          # read-only IMAP search and text extraction
 │   ├── publish_findings.py    # checks findings against the email, hands them to the Grants app
+│   ├── save_password.py       # stores the app password the owner typed into the Grants app
 │   └── schedule.py            # Task Scheduler, launchd or cron
 ├── tests/selftest.py          # end-to-end check with made-up emails, no mailbox needed
 └── state/                     # inbox copies, findings, status (gitignored)
