@@ -7,10 +7,14 @@ const { app, BrowserWindow, dialog, ipcMain, nativeTheme, shell } = require("ele
 const fs = require("fs");
 const path = require("path");
 const { fileURLToPath } = require("url");
-const { Store, isGrantsFolder, now, MAX_ANSWER } = require("./store");
+const { Store, isGrantsFolder, runActive, now, MAX_ANSWER } = require("./store");
 const { createDemoRoot } = require("./demo");
+const Setup = require("./setup");
+const System = require("./system");
 
 const DEMO = process.argv.includes("--demo");
+// With --demo, --setup starts the sample version at the beginning of setup instead of on sample data.
+const DEMO_SETUP = DEMO && process.argv.includes("--setup");
 const RENDERER = path.join(__dirname, "renderer", "index.html");
 const UPLOAD_TYPES = ["pdf", "doc", "docx", "xls", "xlsx", "csv", "png", "jpg", "jpeg", "txt"];
 
@@ -46,7 +50,7 @@ function saveRoot(root) {
 }
 
 function findRoot() {
-  if (DEMO) return (demoRoot = demoRoot || createDemoRoot());
+  if (DEMO) return (demoRoot = demoRoot || createDemoRoot({ blank: DEMO_SETUP }));
   const saved = savedRoot();
   if (isGrantsFolder(saved)) return saved;
   // Started from the source tree (npm start): the grants folder is two levels up.
@@ -143,7 +147,18 @@ function handle(channel, fn) {
 
 const gone = { ok: false, error: "That application has changed since this page loaded. It has been refreshed." };
 
-handle("state", () => ({ ok: true, state: store ? { ...store.state(), demo: DEMO } : { needs_folder: true, demo: DEMO } }));
+function setupStatus(root) {
+  let saved = null;
+  try {
+    saved = JSON.parse(fs.readFileSync(path.join(root, "config", "setup.json"), "utf8"));
+  } catch {}
+  return { started: !!saved, completed: !!(saved && saved.completed_at) };
+}
+
+handle("state", () => ({
+  ok: true,
+  state: store ? { ...store.state(), demo: DEMO, setup: setupStatus(store.root) } : { needs_folder: true, demo: DEMO },
+}));
 
 handle("doc", ({ slug, file }) => {
   const text = store.doc(slug, file || null);
@@ -252,6 +267,151 @@ handle("choose-folder", async () => {
   saveRoot(root);
   useRoot(root);
   return { ok: true };
+});
+
+// ── Setup ────────────────────────────────────────────────────────────────────────
+// The window sends what the owner typed; this process keeps it in config/setup.json and, once setup
+// is finished, writes the agent's files from it on every explicit save.
+handle("setup-get", () => {
+  const d = Setup.load(store.root);
+  return {
+    ok: true, draft: d, review: Setup.review(d), steps: Setup.STEPS, platform: process.platform,
+    results: DEMO || !!Setup.resultsFolder(store.root), demo: DEMO,
+  };
+});
+
+function applySetup(d) {
+  Setup.writeAgentFiles(store.root, d);
+  const results = Setup.resultsFolder(store.root);
+  if (results && d.mail.enabled === "yes" && d.mail.address) Setup.writeResultsSettings(results, store.root, d);
+}
+
+handle("setup-save", ({ draft, apply }) => {
+  const d = Setup.normalize(draft, Setup.load(store.root));
+  Setup.save(store.root, d);
+  if (apply && d.completed_at) applySetup(d);
+  return { ok: true, review: Setup.review(d), saved_at: d.updated_at };
+});
+
+const IMAGE_DOCS = ["logo", "owner_headshot", "photos"];
+
+handle("setup-upload", async ({ key }) => {
+  if (!Setup.DOC_KEYS.includes(key) && key !== "photos") return { ok: false, error: "Unknown document." };
+  const images = IMAGE_DOCS.includes(key);
+  const pick = await dialog.showOpenDialog(win, {
+    title: images ? "Choose a picture" : "Choose the file",
+    buttonLabel: "Add",
+    properties: key === "photos" ? ["openFile", "multiSelections"] : ["openFile"],
+    filters: [images ? { name: "Pictures", extensions: ["png", "jpg", "jpeg"] } : { name: "Documents and images", extensions: UPLOAD_TYPES }],
+  });
+  if (pick.canceled || !pick.filePaths.length) return { ok: false, cancelled: true };
+  const d = Setup.load(store.root);
+  const names = [];
+  for (const src of pick.filePaths.slice(0, 12)) {
+    const r = store.copyDoc(key.replace(/_/g, "-"), src, images);
+    if (!r.ok) return r;
+    if (key === "photos") d.documents.photos = [...d.documents.photos.filter((f) => f !== r.file), r.file].slice(-12);
+    else d.documents[key] = r.file;
+    names.push(r.name);
+  }
+  Setup.save(store.root, d);
+  if (d.completed_at) applySetup(d);
+  return { ok: true, documents: d.documents, names };
+});
+
+handle("setup-remove-doc", ({ key, file }) => {
+  const d = Setup.load(store.root);
+  if (key === "photos") d.documents.photos = d.documents.photos.filter((f) => f !== file);
+  else if (Setup.DOC_KEYS.includes(key)) d.documents[key] = "";
+  else return { ok: false, error: "Unknown document." };
+  Setup.save(store.root, d);
+  if (d.completed_at) applySetup(d);
+  return { ok: true, documents: d.documents };
+});
+
+handle("setup-checks", () => System.checks().then((checks) => ({ ok: true, checks })));
+
+// The mailbox app password: typed in the window, passed straight to grant-results'
+// save_password.py, kept nowhere by the app.
+handle("mail-password", async ({ password }) => {
+  const results = Setup.resultsFolder(store.root);
+  if (!results) return { ok: false, error: "The email helper (the grant-results folder) isn't next to this grants folder." };
+  if (DEMO) return { ok: false, error: "The sample version doesn't save passwords." };
+  const pw = String(password || "").trim();
+  if (!pw || pw.length > 200) return { ok: false, error: "Paste the app password first." };
+  const d = Setup.load(store.root);
+  if (!d.mail.address || d.mail.provider === "microsoft") return { ok: false, error: "Enter a Gmail, iCloud, Yahoo or other IMAP address first." };
+  if (d.mail.provider === "other" && !/^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(d.mail.imap_host)) {
+    return { ok: false, error: "Enter the mail server's name, such as imap.example.com." };
+  }
+  Setup.writeResultsSettings(results, store.root, d);
+  const saved = await System.savePassword(results, pw);
+  if (!saved.ok) return { ok: false, error: saved.detail };
+  d.mail.password_saved_at = now();
+  const c = await System.checkMail(results);
+  d.mail.check = c.ok ? "ok" : c.detail;
+  Setup.save(store.root, d);
+  return { ok: true, signed_in: c.ok, detail: c.detail, mail: d.mail };
+});
+
+handle("mail-check", async () => {
+  const results = Setup.resultsFolder(store.root);
+  if (!results || DEMO) return { ok: false, error: "There's no email helper to check here." };
+  const d = Setup.load(store.root);
+  Setup.writeResultsSettings(results, store.root, d);
+  const c = await System.checkMail(results);
+  d.mail.check = c.ok ? "ok" : c.detail;
+  Setup.save(store.root, d);
+  return { ok: true, signed_in: c.ok, detail: c.detail, mail: d.mail };
+});
+
+const FREQ_WORDS = { daily: "every day", weekdays: "every weekday", "twice-weekly": "Mondays and Thursdays", weekly: "every Monday" };
+const at = (h) => new Date(2000, 0, 1, Number(h) || 0).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+
+// Writes the agent's files, then turns the schedules on (or off).
+handle("setup-finish", async () => {
+  const d = Setup.load(store.root);
+  const review = Setup.review(d);
+  if (review.blocking.length) return { ok: false, error: "A few things the agent can't work without are still missing.", review };
+  const steps = [];
+  applySetup(d);
+  steps.push({ ok: true, text: "Saved your answers where the agent reads them." });
+  const results = Setup.resultsFolder(store.root);
+  const mailOn = !!(results && d.mail.enabled === "yes" && d.mail.password_saved_at);
+  if (DEMO) {
+    steps.push({ ok: true, text: "This is the sample version, so no schedule was turned on." });
+  } else {
+    const f = d.schedule.frequency;
+    const g = await System.schedule(store.root, f);
+    steps.push({
+      ok: g.ok,
+      text: g.ok ? (f === "manual" ? "No automatic checks. Use Check for grants now." : `The agent will look for grants ${FREQ_WORDS[f]} at ${at(d.schedule.hour)}.`)
+        : "The schedule couldn't be turned on.",
+      detail: g.ok ? "" : g.detail,
+    });
+    if (results && fs.existsSync(path.join(results, "config", "settings.json"))) {
+      const mf = mailOn ? d.schedule.mail_frequency : "manual";
+      const m = await System.schedule(results, mf);
+      steps.push({
+        ok: m.ok,
+        text: m.ok ? (mf === "manual" ? "Funder emails won't be read automatically." : `It will read funder emails ${FREQ_WORDS[mf]} at ${at(d.schedule.mail_hour)}.`)
+          : "The email schedule couldn't be turned on.",
+        detail: m.ok ? "" : m.detail,
+      });
+    }
+  }
+  d.completed_at = d.completed_at || now();
+  d.done = [...new Set([...d.done, "finish"])];
+  Setup.save(store.root, d);
+  notify();
+  return { ok: true, steps };
+});
+
+handle("run-now", async () => {
+  if (DEMO) return { ok: false, error: "The sample version can't start the agent." };
+  if (runActive(path.join(store.root, ".run.lock"))) return { ok: false, error: "The agent is already working." };
+  if (!fs.existsSync(path.join(store.root, "config", "profile.json"))) return { ok: false, error: "Finish setup first." };
+  return System.startRun(store.root);
 });
 
 // ── Lifecycle ────────────────────────────────────────────────────────────────────
