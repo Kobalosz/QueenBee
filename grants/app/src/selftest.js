@@ -50,7 +50,7 @@ try {
   const pdf = path.join(root, "My W-9 (2026).pdf");
   fs.writeFileSync(pdf, "%PDF-1.4 demo");
   const up = store.saveUpload("sample-community-fund-small-business-2026", "w9", pdf);
-  assert.ok(up.ok && up.file.startsWith(path.join("data", "docs")), "upload saved under data/docs");
+  assert.ok(up.ok && up.file.startsWith("data/docs/"), "upload saved under data/docs");
 
   // Schedule: weekly at 9 lands on a Monday 09:00 after now.
   const nr = nextRun({ frequency: "weekly", hour: 9 }, new Date(2026, 9, 21, 12, 0));

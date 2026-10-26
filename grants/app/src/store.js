@@ -17,6 +17,7 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,120}$/;
 const NEED_RE = /^[A-Za-z0-9_-]{1,40}$/;
 const DOC_NAME_RE = /^[A-Za-z0-9._-]+\.(md|txt)$/;
 const UPLOAD_RE = /\.(pdf|docx?|xlsx?|csv|png|jpe?g|txt)$/i;
+const IMAGE_RE = /\.(png|jpe?g)$/i;
 const OWNER_FIELDS = ["approved_at", "submitted_by_owner_at", "outcome", "outcome_amount_usd", "outcome_at"];
 const MAX_ANSWER = 5000;
 const MAX_UPLOAD = 50 * 1024 * 1024;
@@ -234,19 +235,26 @@ class Store {
     return fs.existsSync(p) ? p : null;
   }
 
-  // Copies a file the owner picked into data/docs/ under a safe name, and records it on the need.
-  saveUpload(slug, needId, srcPath) {
+  // Copies a file the owner picked into data/docs/<prefix>-<name>, under a safe name. `images`
+  // allows only pictures. The path it returns always uses forward slashes.
+  copyDoc(prefix, srcPath, images = false) {
     const base = path.basename(srcPath).replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^[-.]+|[-.]+$/g, "");
+    if (images && !IMAGE_RE.test(base)) return { ok: false, error: "Choose a picture: a PNG or JPG file." };
     if (!UPLOAD_RE.test(base)) return { ok: false, error: "Choose a PDF, Word, Excel, CSV, image or text file." };
     const size = fs.statSync(srcPath).size;
     if (!size || size > MAX_UPLOAD) return { ok: false, error: "That file is empty or larger than 50 MB." };
     const docs = path.join(this.root, "data", "docs");
     fs.mkdirSync(docs, { recursive: true });
-    const dest = path.join(docs, `${slug}-${base}`);
-    fs.copyFileSync(srcPath, dest);
-    const rel = path.relative(this.root, dest);
-    this.setNeed(slug, needId, { file: rel, answered_at: now() });
-    return { ok: true, file: rel, name: base };
+    const name = `${prefix}-${base}`.slice(-160);
+    fs.copyFileSync(srcPath, path.join(docs, name));
+    return { ok: true, file: `data/docs/${name}`, name: base };
+  }
+
+  // A file the owner uploaded for one application's need, recorded on that need.
+  saveUpload(slug, needId, srcPath) {
+    const r = this.copyDoc(slug, srcPath);
+    if (r.ok) this.setNeed(slug, needId, { file: r.file, answered_at: now() });
+    return r;
   }
 }
 
