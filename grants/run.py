@@ -27,8 +27,21 @@ def load(name):
     return json.loads((HERE / "config" / name).read_text(encoding="utf-8"))
 
 
-def settings_prompt(s, p, max_override=None):
-    """Turn config/settings.json into the sentences the agent has to obey this run."""
+def agent_has_submitted():
+    """Whether the agent has ever sent an application itself (the owner's own submissions don't count)."""
+    for f in (HERE / "applications").glob("*.json"):
+        try:
+            rec = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(rec, dict) and rec.get("status") == "SUBMITTED" and rec.get("submitted_at"):
+            return True
+    return False
+
+
+def settings_prompt(s, p, max_override=None, first=False):
+    """Turn config/settings.json into the sentences the agent has to obey this run. first: the agent
+    has never submitted anything, so in auto mode the first application waits for the owner's OK."""
     run_, sub, t = s.get("run", {}), s.get("submission", {}), s.get("targets", {})
     ch, sf = s.get("channels", {}), s.get("safety", {})
     out = []
@@ -43,6 +56,10 @@ def settings_prompt(s, p, max_override=None):
     else:
         out.append("SUBMISSION MODE IS AUTO: submit Tier A web-form applications that clear every gate in config/spec.md. "
                    "Tier B (federal, state, document packages) is NEVER submitted: draft the package and mark PACKAGE READY.")
+        if first and sub.get("hold_first_for_approval", True):
+            out.append("FIRST APPLICATION: you have never submitted one for this owner, so the owner sees the quality first. "
+                       "Until an application has been approved in the Grants app and sent, treat Tier A exactly as approve "
+                       "mode: write the doc, lint it, set the record to READY FOR APPROVAL, and do not submit.")
     out.append(f"Note any form closing in under {run_.get('min_days_before_deadline_to_submit', 2)} day(s); never start a "
                f"package closing in under {run_.get('min_days_before_deadline_to_draft', 14)} days (log TOO TIGHT instead).")
     if run_.get("one_application_per_funder_per_run", True):
@@ -111,7 +128,7 @@ PYTHON: on this computer run every script as `{py} scripts/<name>.py`.
 
 Read and follow, in order: CLAUDE.md, config/settings.json, config/profile.json, config/answers.md, config/spec.md, config/documents.md, data/queue.md, data/funder-notes.md, state/status.md, logs/grants-log.md, and config/owner-input.json. Act on the owner's answers, uploads, approvals and results in config/owner-input.json first; you never edit that file.
 
-RUN CONFIG (from config/settings.json, obey exactly): {settings_prompt(settings, profile, max_override)}
+RUN CONFIG (from config/settings.json, obey exactly): {settings_prompt(settings, profile, max_override, not agent_has_submitted())}
 
 SOURCING: run {py} scripts/grants_gov_sweep.py and {py} scripts/funder_sweep.py, each ONCE, in the FOREGROUND with the Bash tool (timeout 400000). Never background them: a headless session ends when your turn ends. Then run the capped web-search lane in data/sources.md, taking the searches the last status block did not. Every lead is verified on the funder's own page before anything is written.
 
@@ -135,7 +152,8 @@ def main():
         max_override = int(args[0])
     for f in ("settings.json", "profile.json", "answers.md"):
         if not (HERE / "config" / f).is_file():
-            sys.exit(f"ERROR: config/{f} is missing. Open this folder in Claude Code and say \"set us up\" first.")
+            sys.exit(f"ERROR: config/{f} is missing. Finish setup in the Grants app, or open this folder in Claude Code "
+                     "and say \"set us up\".")
     for d in ("applications/files", "logs", "screenshots", "state"):
         (HERE / d).mkdir(parents=True, exist_ok=True)
     prompt = build_prompt(load("settings.json"), load("profile.json"), max_override)

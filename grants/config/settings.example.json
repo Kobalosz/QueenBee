@@ -1,5 +1,5 @@
 {
-  "_readme": "Every knob the grant agent obeys. Setup copies this to settings.json and fills it from the client's answers. run.sh turns it into the instructions for each run. Full docs: README.md#settings.",
+  "_readme": "Every knob the grant agent obeys. Setup copies this to settings.json and fills it from the client's answers. run.py turns it into the instructions for each run. Full docs: README.md#settings.",
   "run": {
     "max_submissions_per_run": 2,
     "max_drafts_per_run": 4,
@@ -19,6 +19,8 @@
   "submission": {
     "mode": "auto",
     "_mode_note": "auto: scheduled runs submit simple web-form grants (Tier A in config/spec.md) that clear every gate. approve: scheduled runs draft; every application waits as READY FOR APPROVAL until the owner clicks 'Approve for sending' in the Grants app, and the next run sends it. Federal, state and package grants (Tier B) are never submitted by the agent in either mode.",
+    "hold_first_for_approval": true,
+    "_first_note": "In auto mode, the very first application still waits as READY FOR APPROVAL, so the owner sees the quality before anything goes out on its own. Once one has been approved and sent, auto mode takes over.",
     "allow_checkbox_certification": true,
     "_checkbox_note": "A checkbox like 'I certify this information is accurate' may be ticked, because every fact on the form comes from the client's confirmed files. false: any such checkbox makes the application NEEDS HUMAN.",
     "allow_typed_signature": false,
