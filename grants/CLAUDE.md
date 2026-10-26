@@ -101,7 +101,8 @@ can collect answers from the owner and relay them; say so.
 8. **Give them the Grants app.** It is the only thing they will open from now on. If `app/dist/`
    has no build for their system yet, run `cd app && npm install && npm run dist:win` (or
    `dist:mac`; needs Node, so ask first if it is missing). On Windows, run
-   `app/dist/Grants Setup <version>.exe`, which adds Grants to the Start menu and the Desktop; on a
+   `Grants-Setup-<version>.exe` (from the repository's GitHub Releases, or `app/dist/`), which adds
+   Grants to the Start menu and the Desktop and keeps itself up to date; on a
    Mac, open the `.dmg` and drag Grants into Applications. On first launch it asks for the grants
    folder: point it at this folder. Walk through it in two sentences:
    the top line says whether anything needs them, and they answer questions, upload files, approve,

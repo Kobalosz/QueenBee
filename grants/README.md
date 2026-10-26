@@ -117,7 +117,7 @@ npm install
 npm run demo       # the app with made-up sample data, to preview it
 npm run demo:setup # setup from a blank sample folder, to walk through it
 npm start          # the app on this grants folder
-npm run dist:win   # build "Grants Setup <version>.exe" in app/dist/: one installer for Intel and ARM PCs
+npm run dist:win   # build Grants-Setup-<version>.exe in app/dist/: one installer for Intel and ARM PCs
 npm run dist:mac   # build Grants-<version>.dmg for a Mac
 npm run check      # syntax checks and the self-test
 ```
@@ -130,8 +130,23 @@ A code-signing certificate (Windows) or an Apple Developer ID removes that step.
 
 The Windows installer carries both an Intel/AMD (x64) and an ARM64 build and installs the one that
 fits, so it runs natively on Snapdragon Surface devices as well as Intel ones. The installer and
-`app/dist/` are not in git: give the owner the `.exe` itself, for example attached to a GitHub
-Release.
+`app/dist/` are not in git: the owner downloads the `.exe` from this repository's GitHub Releases.
+
+**Updates.** The installed Windows app checks GitHub Releases when it opens and every six hours.
+When a newer version is there, it downloads it in the background and installs it the next time the
+owner closes Grants; a banner offers "Restart Grants now". To ship an update:
+
+```bash
+cd app
+# raise "version" in package.json, then:
+npm run dist:win
+gh release create v<version> dist/Grants-Setup-<version>.exe dist/Grants-Setup-<version>.exe.blockmap dist/latest.yml \
+  --title "Grants <version>" --notes "What changed"
+```
+
+`latest.yml` is what the app reads, so all three files go on the release, with the names unchanged.
+This updates the app only, not the agents' folders. The Mac app does not update itself, because
+that needs an Apple-signed build.
 
 ## What it does with each grant
 
