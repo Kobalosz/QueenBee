@@ -8,6 +8,9 @@ config/profile.json
 config/answers.md
 config/settings.json
 config/owner-input.json
+# What the owner entered in the Grants app's setup, and copies of files it replaced
+config/setup.json
+config/backup/
 
 # The client's documents (W-9, financials, business plan, IRS letter, photos)
 data/docs/
