@@ -109,6 +109,8 @@ const NEEDS_YOU = ["todo", "approve", "submit"];
 const needsSetup = (s) => !s.configured || (s.setup && s.setup.started && !s.setup.completed);
 
 function header(s) {
+  $("update").hidden = !s.update_ready;
+  if (s.update_ready) $("update-text").textContent = `A new version of Grants (${s.update_ready}) is ready. It installs the next time you close Grants.`;
   $("biz").textContent = s.business || "";
   document.title = s.business ? `Grants for ${s.business}` : "Grants";
   $("running").hidden = !s.running;
@@ -502,6 +504,15 @@ document.addEventListener("click", async (e) => {
     case "choose-folder":
       act(api.chooseFolder, {}, b, "Folder chosen.");
       break;
+    case "install-update": {
+      b.disabled = true;
+      const r = await api.installUpdate();
+      if (!r.ok) {
+        toast(r.error, true);
+        b.disabled = false;
+      }
+      break;
+    }
     case "open-settings":
       openSetup(true);
       break;

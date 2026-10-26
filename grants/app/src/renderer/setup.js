@@ -507,7 +507,7 @@ function railHtml() {
     return `<li class="${cls}"><button data-act="setup-go" data-step="${s}"${s === SU.step ? ' aria-current="step"' : ""}>
       <span class="cell" aria-hidden="true"><span class="inner"><span class="fill"></span></span><span class="num">${i + 1}</span></span>
       <span class="rail-label">${esc(STEP_TITLES[s])}<span class="sr">${done.has(s) ? ", done" : ""}</span></span></button></li>`;
-  }).join("")}</ol><p class="rail-note">Saved as you type. Stop any time and pick up where you left off.</p></nav>`;
+  }).join("")}</ol><p class="rail-note">Saved as you type. Stop any time and pick up where you left off.${STATE && STATE.version ? `<br>Grants ${esc(STATE.version)}` : ""}</p></nav>`;
 }
 
 function stepbarHtml() {

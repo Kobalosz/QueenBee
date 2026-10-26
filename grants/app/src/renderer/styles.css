@@ -81,6 +81,8 @@ a { color: inherit; text-underline-offset: 3px; }
 .top-actions button { padding: 9px 14px; font-size: 15px; }
 .banner .wrap { padding-top: 10px; padding-bottom: 10px; font-size: var(--t-meta); font-weight: 600; }
 .running { background: var(--leaf-wash); color: var(--leaf); }
+.update { background: var(--honey-wash); color: var(--ink); }
+.update button.link { font-size: inherit; padding: 0; margin-left: 6px; }
 .demo { background: var(--demo-wash); color: var(--demo); }
 
 /* ── Buttons and fields, shared ─────────────────────────────────────────────── */
