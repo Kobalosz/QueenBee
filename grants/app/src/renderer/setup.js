@@ -517,7 +517,7 @@ function stepbarHtml() {
   let primary = "";
   if (editing()) {
     primary = SU.step === "finish" ? "" : `<button data-act="setup-save">Save changes</button>`;
-    if (next) primary += `<button class="quiet" data-act="setup-next" data-save="0">Next: ${esc(STEP_TITLES[next])}</button>`;
+    if (next) primary += `<button class="quiet" data-act="setup-next" data-save="0">Next<span class="wide">: ${esc(STEP_TITLES[next])}</span></button>`;
   } else if (SU.step === "welcome") primary = `<button data-act="setup-next">Start</button>`;
   else if (next) primary = `<button data-act="setup-next">Save and continue</button>`;
   return `<div class="stepbar"><span class="saved" id="su-saved" aria-live="polite">${savedText()}</span><div class="go">${back}${primary}</div></div>`;

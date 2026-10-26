@@ -405,4 +405,8 @@ div.when { display: contents; }
   .row-right { grid-row: auto; grid-column: 1; text-align: left; }
   .project { padding: 4px 14px 16px; }
   .items td.amt { width: 120px; }
+  .stepbar { background: var(--paper); border-top: 1px solid var(--rule); padding-top: 10px; }
+  .stepbar .saved { width: 100%; font-size: var(--t-small); }
+  .wide { display: none; }
 }
+.clock:empty { display: none; }
