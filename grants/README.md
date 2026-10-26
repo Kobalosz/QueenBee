@@ -117,7 +117,7 @@ npm install
 npm run demo       # the app with made-up sample data, to preview it
 npm run demo:setup # setup from a blank sample folder, to walk through it
 npm start          # the app on this grants folder
-npm run dist:win   # build "Grants Setup <version>.exe" in app/dist/ for a Windows PC
+npm run dist:win   # build "Grants Setup <version>.exe" in app/dist/: one installer for Intel and ARM PCs
 npm run dist:mac   # build Grants-<version>.dmg for a Mac
 npm run check      # syntax checks and the self-test
 ```
@@ -127,6 +127,11 @@ setup if the folder has never been set up. The build is not
 code-signed yet, so the first launch asks for confirmation. On Windows, SmartScreen shows "Windows
 protected your PC": choose More info, then Run anyway. On a Mac: right-click the app, Open, Open.
 A code-signing certificate (Windows) or an Apple Developer ID removes that step.
+
+The Windows installer carries both an Intel/AMD (x64) and an ARM64 build and installs the one that
+fits, so it runs natively on Snapdragon Surface devices as well as Intel ones. The installer and
+`app/dist/` are not in git: give the owner the `.exe` itself, for example attached to a GitHub
+Release.
 
 ## What it does with each grant
 
