@@ -32,6 +32,15 @@ If `config/profile.json`, `config/answers.md`, or `config/settings.json` is miss
 install. **Do not open a browser and do not apply to anything.** Set it up first, starting at step 1
 in the same message. Do not offer a menu.
 
+**The owner can also set up alone in the Grants app.** Its Setup writes those three files from
+`config/setup.json`. An `answers.md` that starts with `<!-- Written by the Grants app` came from
+it, and so did the profile and settings beside it: they are the owner's own answers, confirmed
+step by step, so do not re-interview. If such a file needs changing, tell the owner which step of
+Settings in the app to open. An edit made here would be replaced the next time they save there.
+Setup in the app covers steps 1 to 5, 7 and 8. Step 6 (local funders) happens on the first run:
+see the run checklist. Step 10 is handled by `submission.hold_first_for_approval`: in auto mode,
+the first application waits as READY FOR APPROVAL.
+
 The person in the chat may be the business owner or someone setting this up for the owner (a
 consultant, an assistant). Ask which in your first message, in one line, because it decides who
 confirms facts: **only the owner can confirm facts about the business.** If it is a helper, they
@@ -272,7 +281,9 @@ reporting duties: list them in the doc and add them to the record's `needs` as `
 their due dates, because missing a report can mean returning the money.
 
 ## Run checklist
-1. Read the files in the order at the top, then act on `config/owner-input.json`.
+1. Read the files in the order at the top, then act on `config/owner-input.json`. If the State and
+   local table in `data/funders.md` has no rows, fill it first (setup step 6): setup in the app
+   leaves it for the first run.
 2. Sweeps (federal, funders), then the search lane.
 3. Work the queue by deadline, then new leads: dupe check → gate → tier → write and lint → act →
    write the record and pass `grant_docs.py record`.
