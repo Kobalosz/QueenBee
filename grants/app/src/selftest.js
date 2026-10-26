@@ -86,6 +86,63 @@ try {
   fs.rmSync(lock);
   assert.strictEqual(runActive(lock), false, "no lock, no run");
 
+  // Setup: what the owner enters becomes the agent's files, word for word, and nothing else.
+  const Setup = require("./setup");
+  const blank = createDemoRoot({ blank: true });
+  try {
+    const d = Setup.normalize({
+      owner: { first_name: "Ann", last_name: "Lee", email: "ann@example.com" },
+      business: { legal_name: "Sample Shop LLC", state: "OH", revenue: "182,400", revenue_year: "2025", certifications: "WOSB, SBA, certified 2025-03-01" },
+      demographics: { woman_owned: "yes" },
+      story: { one_line: "We make cabinets." },
+      money: { projects: [{ name: "Saw", items: [{ item: "Panel saw", amount: "$12,500" }, { item: "Install", amount: "about 800" }] }] },
+      targets: { keywords: "cabinets, equipment", skip_funders: "Smith, Jones & Co." },
+      sending: { mode: "approve" },
+      not_a_field: { x: 1 },
+    }, Setup.defaults());
+    assert.strictEqual(d.not_a_field, undefined, "unknown fields dropped");
+    assert.deepStrictEqual(Setup.review(d).blocking, [], "minimal setup is enough to start");
+    assert.ok(Setup.review(Setup.defaults()).blocking.some((b) => b.step === "money"), "no priced project blocks");
+    Setup.writeAgentFiles(blank, d);
+    const prof = JSON.parse(fs.readFileSync(path.join(blank, "config", "profile.json"), "utf8"));
+    const sett = JSON.parse(fs.readFileSync(path.join(blank, "config", "settings.json"), "utf8"));
+    const ans = fs.readFileSync(path.join(blank, "config", "answers.md"), "utf8");
+    assert.strictEqual(prof.ownership_demographics.woman_owned_51pct, "Yes");
+    assert.strictEqual(prof.ownership_demographics.veteran_owned, "", "unanswered stays empty, never No");
+    assert.deepStrictEqual(prof.business.certifications, ["WOSB, SBA, certified 2025-03-01"], "a line with commas stays one entry");
+    assert.strictEqual(sett.submission.mode, "approve");
+    assert.deepStrictEqual(sett.targets.skip_funders, ["Smith, Jones & Co."]);
+    assert.deepStrictEqual(sett.targets.keywords, ["cabinets", "equipment"]);
+    assert.ok(!/One or two sentences/.test(sett.targets.fit_note), "the template's example fit note is not kept");
+    assert.ok(ans.includes("  - Panel saw: $12,500\n  - Total: $12,500"), "budget lines in the format grant_docs.py reads");
+    assert.ok(!ans.includes("about 800"), "a price that isn't a number is left out");
+    assert.ok(ans.includes("- Revenue: $182,400 in fiscal year 2025."), "revenue copied as typed");
+    // Setting up in a chat first: the app keeps what it can't place, and backs up the old file.
+    fs.writeFileSync(path.join(blank, "config", "answers.md"), "# Mine\n\n## The owner's story\nI began in 2019.\n\n## Awards\nBest of Dayton.\n");
+    fs.rmSync(path.join(blank, "config", "setup.json"), { force: true });
+    const imported = Setup.load(blank);
+    assert.strictEqual(imported.story.owner_story, "I began in 2019.");
+    assert.ok(imported.story.extra.includes("Best of Dayton."), "unknown sections kept");
+    assert.strictEqual(imported.business.legal_name, "Sample Shop LLC");
+    Setup.writeAgentFiles(blank, imported);
+    assert.ok(fs.readdirSync(path.join(blank, "config", "backup")).length === 1, "hand-written answers.md backed up");
+    assert.ok(fs.readFileSync(path.join(blank, "config", "answers.md"), "utf8").includes("Best of Dayton."));
+    // Document paths only ever point inside data/docs.
+    const forged = Setup.normalize({}, Object.assign(Setup.defaults(), { documents: { w9: "../../etc/passwd", photos: ["data/docs/a.png", "/tmp/x.png"] } }));
+    assert.strictEqual(forged.documents.w9, "");
+    assert.deepStrictEqual(forged.documents.photos, ["data/docs/a.png"]);
+    // The email agent's settings point back at this folder.
+    const results = path.join(blank, "..", "results-x");
+    fs.mkdirSync(path.join(results, "config"), { recursive: true });
+    const rs = Setup.buildResultsSettings(Object.assign(Setup.defaults(), { mail: Object.assign(Setup.defaults().mail, { address: "a@gmail.com", provider: "gmail", spam_folder: "yes" }) }), {}, results, blank);
+    assert.strictEqual(path.resolve(results, rs.grants_folder), path.resolve(blank));
+    assert.deepStrictEqual(rs.mail.folders, ["INBOX", "[Gmail]/Spam"]);
+    assert.strictEqual(rs.mail.imap_host, "imap.gmail.com");
+    fs.rmSync(results, { recursive: true, force: true });
+  } finally {
+    fs.rmSync(blank, { recursive: true, force: true });
+  }
+
   console.log("selftest OK");
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
